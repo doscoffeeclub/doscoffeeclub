@@ -1,0 +1,905 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dös Coffee Club</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Playfair+Display:ital,wght@1,700&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+html,body{width:100%;height:100%;overflow:hidden;background:#000;font-family:Arial,sans-serif;font-size:12px;}
+
+/* ══════════════════════════════
+   HERO — matches live site behavior exactly:
+   Container: 100vw × 100vh, overflow-x:auto (scrollable)
+   Image: height:100vh, width:auto (maintains aspect ratio)
+   This means:
+   - Image never distorts
+   - On wide viewports: image fills width naturally
+   - On narrow viewports: image overflows, container scrolls
+   - Dots as % of container height; left in px converted from % of img natural width
+══════════════════════════════ */
+#hero{
+  position:relative;
+  width:100vw;
+  height:100vh;
+  overflow-x:auto;
+  overflow-y:hidden;
+  -webkit-overflow-scrolling:touch;
+}
+
+#hero-img{
+  display:block;
+  height:100vh;
+  width:auto; /* maintains 16:9 aspect ratio naturally */
+  min-width:100vw; /* ensure it fills at least the viewport on wide screens */
+  max-width:none;
+  position:relative; /* so dot-layer can be absolutely positioned over it */
+  pointer-events:none;
+  user-select:none;
+}
+
+/* dot layer sits exactly over the image */
+#dot-layer{
+  position:absolute;
+  top:0;
+  left:0;
+  height:100vh;
+  /* width matches image rendered width — set by JS */
+  pointer-events:none;
+}
+
+/* ══════════════════════════════
+   DOTS — exact live site structure:
+   .interactive-point > .hit-area + .dialog-box + .pulse-ring
+   
+   Positions: left/top as % of image rendered size
+   Image natural: 3840×2160 (16:9)
+   At 100vh height: imgH = vh, imgW = vh * (3840/2160) = vh * 1.7778
+   
+   Dot positions as fraction of image (from live site):
+     how   (espresso): fx=0.230, fy=0.440
+     os    (monitor):  fx=0.510, fy=0.420
+     about (note):     fx=0.690, fy=0.480
+     drops (bag):      fx=0.900, fy=0.660
+     faq   (crate):    fx=0.740, fy=0.110
+   
+   These are expressed as % of img dimensions.
+   Since img height = 100vh, top% works directly.
+   Since img width = 100vh*1.7778, left% also works.
+   We express as % of dot-layer which matches img dimensions.
+══════════════════════════════ */
+.interactive-point{
+  position:absolute;
+  width:15px;
+  height:15px;
+  background-color:#fff;
+  border-radius:50%;
+  cursor:pointer;
+  transform:translate(-50%,-50%);
+  z-index:15;
+  box-shadow:rgba(0,0,0,0.25) 0 0 10px;
+  pointer-events:auto;
+}
+
+/* pulse ring — animated ripple */
+.pulse-ring{
+  position:absolute;
+  top:50%;left:50%;
+  transform:translate(-50%,-50%) scale(0.5);
+  width:15px;height:15px;
+  border:2px solid #fff;
+  border-radius:50%;
+  animation:pulse-animation 4s ease-out infinite;
+  transform-origin:center center;
+  opacity:0;
+  z-index:10;
+  pointer-events:none;
+}
+@keyframes pulse-animation{
+  0%  {transform:translate(-50%,-50%) scale(0.5);opacity:0.6;}
+  50% {transform:translate(-50%,-50%) scale(2.5);opacity:0;}
+  100%{transform:translate(-50%,-50%) scale(2.5);opacity:0;}
+}
+
+/* hit area — slightly larger click target */
+.hit-area{
+  position:absolute;
+  top:50%;left:50%;
+  transform:translate(-50%,-50%);
+  width:40px;height:40px;
+  border-radius:50%;
+  z-index:20;
+}
+
+/* dialog box — tooltip that appears on hover */
+.dialog-box{
+  position:absolute;
+  bottom:calc(100% + 10px);
+  left:50%;
+  transform:translateX(-50%) translateY(10px);
+  background:#fff;
+  font-family:'Share Tech Mono',monospace;
+  font-weight:bold;
+  font-size:13px;
+  padding:10px 14px;
+  border-radius:8px;
+  box-shadow:rgba(0,0,0,0.25) 0 0 10px;
+  white-space:nowrap;
+  opacity:0;
+  pointer-events:none;
+  transition:opacity 0.2s ease-in-out, transform 0.2s ease-in-out;
+  z-index:30;
+  text-decoration:none;
+  color:#000;
+  border:none;
+  outline:none;
+  cursor:pointer;
+}
+/* show dialog on hover, hide pulse ring */
+.interactive-point:hover .dialog-box{
+  opacity:1;
+  pointer-events:auto;
+  transform:translateX(-50%) translateY(0);
+}
+.interactive-point:hover .pulse-ring{
+  display:none;
+}
+
+/* ── HEADER ── */
+#header{
+  position:fixed;top:0;left:0;right:0;z-index:50;
+  display:flex;align-items:center;justify-content:center;
+  padding:22px 36px;pointer-events:none;
+}
+#logo{
+  font-family:'Playfair Display',serif;font-style:italic;
+  font-size:2rem;color:#fff;
+  text-shadow:0 1px 14px rgba(0,0,0,0.6);letter-spacing:-0.01em;
+}
+#clock-hero{
+  position:fixed;top:24px;right:36px;
+  font-family:'Share Tech Mono',monospace;
+  font-size:0.85rem;letter-spacing:0.1em;
+  color:rgba(255,255,255,0.75);
+  z-index:50;pointer-events:none;
+  text-shadow:0 1px 8px rgba(0,0,0,0.7);
+}
+#hamburger{
+  position:fixed;top:22px;left:36px;
+  background:none;border:none;cursor:pointer;
+  pointer-events:auto;
+  display:flex;flex-direction:column;gap:5px;
+  padding:6px;z-index:200;
+}
+#hamburger span{display:block;width:22px;height:2px;background:rgba(255,255,255,0.85);transition:opacity 0.2s;}
+#hamburger:hover span{opacity:0.5;}
+
+/* ── JOIN CTA ── */
+#signup-bar{
+  position:fixed;bottom:40px;left:50%;transform:translateX(-50%);
+  z-index:50;display:flex;flex-direction:column;align-items:center;gap:9px;
+}
+#signup-btn{
+  background:#f0ead8;color:#000;border:none;
+  font-family:'Share Tech Mono',monospace;
+  font-size:0.78rem;letter-spacing:0.2em;text-transform:uppercase;
+  padding:14px 42px;cursor:pointer;transition:background 0.2s;
+}
+#signup-btn:hover{background:#c8922a;}
+#signup-hint{
+  font-family:'Share Tech Mono',monospace;
+  font-size:0.62rem;letter-spacing:0.14em;color:rgba(255,255,255,0.35);
+}
+
+/* ══════════════════════════════
+   OVERLAY
+══════════════════════════════ */
+#overlay-bg{
+  position:fixed;inset:0;background:rgba(0,0,0,0);
+  z-index:100;pointer-events:none;transition:background 0.3s;
+}
+#overlay-bg.active{background:rgba(0,0,0,0.45);pointer-events:auto;}
+
+/* ══════════════════════════════
+   XP WINDOW BASE
+══════════════════════════════ */
+.xp-win{
+  position:fixed;background:#ece9d8;
+  border:1px solid #0831a0;border-radius:8px 8px 0 0;
+  box-shadow:3px 3px 10px rgba(0,0,0,0.55);
+  z-index:110;display:none;flex-direction:column;
+  min-width:300px;overflow:hidden;
+}
+.xp-win.open{display:flex;}
+.xp-titlebar{
+  background:linear-gradient(180deg,#0058e0 0%,#3a93ff 3%,#288eff 6%,#127bdc 10%,#1070d4 90%,#0058d0 100%);
+  padding:5px 6px 5px 8px;
+  display:flex;align-items:center;justify-content:space-between;
+  user-select:none;cursor:default;flex-shrink:0;
+  border-radius:7px 7px 0 0;border-bottom:1px solid #0540a0;
+}
+.xp-title-left{display:flex;align-items:center;gap:6px;overflow:hidden;flex:1;}
+.xp-title-icon{font-size:14px;flex-shrink:0;}
+.xp-title-text{font-size:12px;font-weight:bold;color:#fff;text-shadow:0 1px 2px rgba(0,0,0,0.5);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.xp-win-btns{display:flex;gap:2px;flex-shrink:0;margin-left:8px;}
+.xp-wbtn{width:21px;height:21px;border-radius:3px;border:1px solid;font-size:11px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-weight:bold;line-height:1;}
+.xp-wbtn-min{background:linear-gradient(180deg,#f0d080 0%,#d4a820 100%);border-color:#8a6800;color:#000;}
+.xp-wbtn-min:hover{filter:brightness(1.15);}
+.xp-wbtn-close{background:linear-gradient(180deg,#f08080 0%,#d82020 100%);border-color:#880000;color:#fff;}
+.xp-wbtn-close:hover{filter:brightness(1.15);}
+.xp-menubar{background:#ece9d8;border-bottom:1px solid #aaa;padding:1px 4px;display:flex;flex-shrink:0;}
+.xp-mitem{padding:3px 8px;font-size:12px;cursor:pointer;border-radius:3px;}
+.xp-mitem:hover{background:#316ac5;color:#fff;}
+.xp-body{flex:1;overflow-y:auto;background:#fff;}
+.xp-body::-webkit-scrollbar{width:16px;}
+.xp-body::-webkit-scrollbar-track{background:#f0f0f0;border-left:1px solid #ccc;}
+.xp-body::-webkit-scrollbar-thumb{background:linear-gradient(90deg,#c8c8c8,#a8a8a8);border:1px solid #888;}
+.xp-inner{padding:12px;}
+.xp-statusbar{border-top:1px solid #aaa;display:flex;flex-shrink:0;background:#ece9d8;}
+.xp-sb{flex:1;padding:2px 6px;font-size:10px;color:#000;border-right:1px solid #aaa;white-space:nowrap;font-family:'Share Tech Mono',monospace;}
+.xp-sb:last-child{border-right:none;}
+
+/* Panel content */
+.xp-tx-header{background:linear-gradient(90deg,#000080,#1084d0);color:#fff;padding:6px 10px;margin-bottom:10px;font-size:10px;letter-spacing:0.08em;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:4px;font-family:'Share Tech Mono',monospace;}
+.how-step-row{display:flex;margin-bottom:2px;border-bottom:1px solid #e8e8e8;}
+.how-step-row:last-of-type{border-bottom:none;margin-bottom:10px;}
+.how-step-num{background:#316ac5;color:#fff;font-size:10px;font-weight:bold;width:28px;min-width:28px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-family:'Share Tech Mono',monospace;}
+.how-step-txt{font-size:12px;color:#000;line-height:1.6;padding:8px 10px;}
+.how-step-txt strong{color:#316ac5;}
+.how-cta{display:block;width:100%;background:linear-gradient(180deg,#316ac5 0%,#1a4aaa 100%);color:#fff;border:1px solid #0831a0;border-radius:3px;font-size:12px;padding:8px;cursor:pointer;text-align:center;margin-top:4px;}
+.how-cta:hover{filter:brightness(1.1);}
+.lb-header{background:linear-gradient(90deg,#000080,#1084d0);color:#fff;padding:5px 8px;margin-bottom:8px;font-size:10px;letter-spacing:0.06em;font-family:'Share Tech Mono',monospace;}
+.lb-row{display:flex;align-items:baseline;padding:7px 4px;border-bottom:1px solid #e0e0e0;cursor:pointer;}
+.lb-row:hover{background:#e8f0ff;}
+.lb-num{font-size:10px;color:#000080;min-width:64px;flex-shrink:0;font-weight:bold;font-family:'Share Tech Mono',monospace;}
+.lb-name{font-size:11px;color:#000;flex:1;}
+.lb-dots{flex:1;border-bottom:1px dotted #aaa;margin:0 8px;min-width:10px;}
+.lb-status{font-size:9px;letter-spacing:0.08em;flex-shrink:0;font-weight:bold;font-family:'Share Tech Mono',monospace;}
+.lb-status.active{color:#006600;}.lb-status.archive{color:#808080;}
+.lb-detail{display:none;padding:8px 4px 8px 64px;background:#f0f4ff;border-bottom:1px solid #e0e0e0;font-size:11px;line-height:1.7;color:#000;}
+.lb-detail.open{display:block;}
+.lb-detail strong{color:#000080;}
+.lb-terminal-btn{display:inline-block;margin-top:8px;background:linear-gradient(180deg,#316ac5 0%,#1a4aaa 100%);color:#fff;border:1px solid #0831a0;border-radius:3px;font-family:'Share Tech Mono',monospace;font-size:10px;padding:4px 10px;cursor:pointer;}
+.lb-terminal-btn:hover{filter:brightness(1.1);}
+.about-section{margin-bottom:12px;}
+.about-label{font-size:10px;color:#316ac5;text-transform:uppercase;letter-spacing:0.1em;border-bottom:1px solid #c0d0e8;padding-bottom:2px;margin-bottom:4px;font-family:'Share Tech Mono',monospace;}
+.about-val{font-size:12px;color:#000;line-height:1.65;}
+.about-val.italic{font-style:italic;color:#333;}
+.faq-row{border-bottom:1px solid #e0e0e0;cursor:pointer;}
+.faq-q{display:flex;justify-content:space-between;align-items:center;padding:8px 4px;font-size:12px;color:#000;gap:8px;}
+.faq-q::after{content:'+';color:#aaa;font-size:14px;flex-shrink:0;transition:transform 0.15s;}
+.faq-row.open .faq-q::after{transform:rotate(45deg);color:#316ac5;}
+.faq-a{display:none;padding:4px 4px 10px;font-size:11px;line-height:1.7;color:#333;}
+.faq-row.open .faq-a{display:block;}
+
+/* ══════════════════════════════
+   INTERNET CAFÉ
+══════════════════════════════ */
+#cafe-win{
+  position:fixed;top:50%;left:50%;
+  transform:translate(-50%,-50%);
+  width:680px;max-width:94vw;
+  z-index:450;
+}
+#cafe-win .xp-body{padding:0;display:flex;flex-direction:column;}
+#cafe-game-list{padding:10px;display:flex;flex-direction:column;gap:6px;}
+.cafe-list-header{background:linear-gradient(90deg,#000080,#1084d0);color:#fff;padding:6px 10px;margin-bottom:4px;font-size:10px;letter-spacing:0.08em;font-family:'Share Tech Mono',monospace;}
+.g-game-item{display:flex;align-items:center;gap:12px;padding:10px 12px;border:1px solid #ddd;background:#f8f8ff;cursor:pointer;border-radius:3px;}
+.g-game-item:hover{background:#e8f0ff;border-color:#316ac5;}
+.g-game-icon{font-size:24px;flex-shrink:0;width:32px;text-align:center;}
+.g-game-info{flex:1;}
+.g-game-name{font-size:13px;font-weight:bold;color:#000080;}
+.g-game-desc{font-size:11px;color:#666;margin-top:2px;}
+.g-game-play{background:linear-gradient(180deg,#316ac5 0%,#1a4aaa 100%);color:#fff;border:1px solid #0831a0;border-radius:3px;font-size:11px;padding:5px 14px;cursor:pointer;flex-shrink:0;}
+.g-game-play:hover{filter:brightness(1.1);}
+#cafe-iframe-area{display:none;flex-direction:column;}
+#cafe-back-bar{background:#ece9d8;border-bottom:1px solid #aaa;padding:4px 8px;display:flex;align-items:center;gap:8px;flex-shrink:0;}
+#cafe-back-btn{background:linear-gradient(180deg,#ece9d8 0%,#c8c4b0 100%);border:1px solid #888;border-radius:3px;font-size:11px;padding:3px 12px;cursor:pointer;}
+#cafe-back-btn:hover{filter:brightness(1.05);}
+#cafe-game-label{font-size:11px;color:#333;font-family:'Share Tech Mono',monospace;}
+#cafe-iframe{width:100%;height:480px;border:none;background:#000;display:block;}
+
+/* Mobile notice */
+#cafe-mobile-win{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:min(320px,90vw);z-index:450;}
+
+/* ══════════════════════════════
+   NAV DRAWER
+══════════════════════════════ */
+#nav-drawer{position:fixed;top:0;left:0;width:260px;height:100vh;background:#d4e0f7;border-right:2px solid #0831a0;z-index:300;transform:translateX(-100%);transition:transform 0.38s cubic-bezier(0.16,1,0.3,1);display:flex;flex-direction:column;overflow:hidden;box-shadow:3px 0 10px rgba(0,0,0,0.3);}
+#nav-drawer.open{transform:translateX(0);}
+#nav-titlebar{background:linear-gradient(180deg,#1c5adc 0%,#0e3aaa 100%);padding:10px 12px;display:flex;align-items:center;gap:10px;flex-shrink:0;}
+#nav-avatar{width:36px;height:36px;background:#fff;border-radius:50%;border:2px solid rgba(255,255,255,0.5);display:flex;align-items:center;justify-content:center;font-size:18px;}
+#nav-title-name{color:#fff;font-weight:bold;font-size:13px;text-shadow:0 1px 2px rgba(0,0,0,0.5);}
+#nav-body{flex:1;background:#fff;padding:4px 0;overflow-y:auto;}
+.nav-link{display:flex;align-items:center;gap:8px;padding:8px 14px;font-size:12px;color:#000;cursor:pointer;text-decoration:none;}
+.nav-link:hover{background:#316ac5;color:#fff;}
+.nav-icon{font-size:16px;width:22px;text-align:center;flex-shrink:0;}
+.nav-divider{height:1px;background:#a0b8e8;margin:3px 0;}
+#nav-footer{background:linear-gradient(180deg,#1c5adc 0%,#0e3aaa 100%);padding:6px 8px;display:flex;justify-content:flex-end;gap:4px;}
+.nav-footer-btn{padding:4px 12px;background:linear-gradient(180deg,#3a7ae8 0%,#1e55c0 100%);border:1px solid #0a2880;border-radius:3px;color:#fff;font-size:11px;cursor:pointer;}
+
+/* ══════════════════════════════
+   SIGNUP MODAL
+══════════════════════════════ */
+#signup-modal{display:none;position:fixed;inset:0;z-index:500;background:rgba(0,0,0,0.7);align-items:center;justify-content:center;}
+#signup-modal.open{display:flex;}
+#signup-win-modal{background:#ece9d8;border:1px solid #0831a0;border-radius:8px 8px 0 0;box-shadow:3px 3px 8px rgba(0,0,0,0.5);width:100%;max-width:340px;display:flex;flex-direction:column;overflow:hidden;}
+#signup-title{background:linear-gradient(180deg,#0058e0 0%,#3a93ff 3%,#288eff 6%,#127bdc 10%,#1070d4 90%,#0058d0 100%);padding:5px 8px;display:flex;align-items:center;justify-content:space-between;border-radius:7px 7px 0 0;}
+#signup-title-txt{font-size:12px;font-weight:bold;color:#fff;text-shadow:0 1px 2px rgba(0,0,0,0.5);}
+#signup-close{width:21px;height:21px;border-radius:3px;background:linear-gradient(180deg,#f08080 0%,#d82020 100%);border:1px solid #880000;color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:11px;font-weight:bold;}
+#signup-body{padding:16px;background:#fff;}
+#signup-body p{font-size:12px;color:#000;line-height:1.6;margin-bottom:14px;}
+#signup-body input{width:100%;background:#fff;border:2px inset #aaa;font-family:'Share Tech Mono',monospace;font-size:12px;padding:5px 8px;outline:none;margin-bottom:10px;color:#000;}
+#signup-submit{display:block;width:100%;background:linear-gradient(180deg,#316ac5 0%,#1a4aaa 100%);border:1px solid #0831a0;border-radius:3px;font-size:12px;padding:7px;cursor:pointer;color:#fff;}
+#signup-submit:hover{filter:brightness(1.1);}
+
+/* ══════════════════════════════
+   GHOST DESKTOP
+══════════════════════════════ */
+#ghost-wrap{display:none;position:fixed;inset:0;z-index:400;flex-direction:column;overflow:hidden;opacity:0;transition:opacity 0.4s;}
+#ghost-wrap.open{display:flex;opacity:1;}
+#ghost-bg{position:absolute;inset:0;background-size:cover;background-position:center;background-repeat:no-repeat;}
+#g-icon-col{position:absolute;top:10px;left:6px;display:flex;flex-direction:column;gap:6px;z-index:10;}
+.g-icon{display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;padding:4px;width:76px;user-select:none;}
+.g-icon:hover .g-icon-box{outline:1px dotted #fff;background:rgba(0,0,150,0.25);}
+.g-icon-box{width:48px;height:48px;display:flex;align-items:center;justify-content:center;font-size:32px;border-radius:2px;}
+.g-icon-label{font-size:11px;color:#fff;text-align:center;text-shadow:1px 1px 2px #000,0 0 4px #000;line-height:1.3;}
+#g-taskbar{position:absolute;bottom:0;left:0;right:0;height:36px;background:linear-gradient(180deg,#245edc 0%,#1941a5 4%,#1d4db8 6%,#1a42ad 10%,#1f51c8 45%,#1b47bc 50%,#1a3fa8 56%,#1f52c8 100%);border-top:1px solid #0831a0;display:flex;align-items:center;padding:0 4px;gap:3px;z-index:500;box-shadow:0 -1px 0 #8ab4f8 inset;}
+#g-start-btn{height:30px;padding:0 12px 0 8px;background:linear-gradient(180deg,#5db642 0%,#3a9c1f 8%,#48b028 45%,#3ea01c 50%,#37941a 56%,#4aaa20 100%);border:1px solid #267011;border-radius:0 12px 12px 0;font-size:13px;font-weight:bold;color:#fff;cursor:pointer;display:flex;align-items:center;gap:5px;text-shadow:0 1px 1px rgba(0,0,0,0.5);box-shadow:0 1px 2px rgba(0,0,0,0.4),inset 0 1px 0 rgba(255,255,255,0.3);flex-shrink:0;}
+#g-start-btn:hover{filter:brightness(1.1);}
+#g-tb-sep{width:1px;height:24px;background:rgba(255,255,255,0.2);margin:0 2px;}
+#g-task-buttons{display:flex;gap:3px;flex:1;overflow:hidden;}
+.g-task-btn{height:26px;min-width:100px;max-width:150px;padding:0 8px;background:linear-gradient(180deg,#2a6dd9 0%,#1e56b0 100%);border:1px solid #1a4a9a;border-radius:3px;font-size:11px;color:#fff;cursor:pointer;display:flex;align-items:center;gap:4px;white-space:nowrap;overflow:hidden;text-shadow:0 1px 1px rgba(0,0,0,0.5);}
+.g-task-btn:hover{filter:brightness(1.1);}
+#g-clock{margin-left:auto;height:28px;padding:0 10px;background:linear-gradient(180deg,#1240a0 0%,#0c2d80 100%);border:1px solid #0a2060;border-radius:3px;font-size:11px;color:#fff;display:flex;align-items:center;font-family:'Share Tech Mono',monospace;white-space:nowrap;flex-shrink:0;}
+#g-start-menu{position:absolute;bottom:36px;left:0;width:300px;background:#d4e0f7;border:2px solid #0831a0;border-bottom:none;box-shadow:3px -3px 8px rgba(0,0,0,0.4);z-index:600;display:none;flex-direction:column;border-radius:8px 8px 0 0;overflow:hidden;}
+#g-sm-header{background:linear-gradient(180deg,#1c5adc 0%,#0e3aaa 100%);padding:10px 12px;display:flex;align-items:center;gap:12px;}
+#g-sm-avatar{width:40px;height:40px;background:#fff;border-radius:50%;border:2px solid rgba(255,255,255,0.5);display:flex;align-items:center;justify-content:center;font-size:22px;}
+#g-sm-name{color:#fff;font-weight:bold;font-size:13px;text-shadow:0 1px 2px rgba(0,0,0,0.5);}
+#g-sm-body{display:flex;}
+#g-sm-left{flex:1;background:#fff;padding:4px 0;border-right:1px solid #a0b8e8;}
+#g-sm-right{flex:1;background:#d4e0f7;padding:4px 0;}
+.g-sm-item{display:flex;align-items:center;gap:8px;padding:6px 10px;cursor:pointer;color:#000;}
+.g-sm-item:hover{background:#316ac5;color:#fff;}
+.g-sm-icon{font-size:18px;width:22px;text-align:center;flex-shrink:0;}
+.g-sm-text{font-size:12px;}
+.g-sm-divider{height:1px;background:#a0b8e8;margin:3px 0;}
+#g-sm-footer{background:linear-gradient(180deg,#1c5adc 0%,#0e3aaa 100%);padding:5px 8px;display:flex;justify-content:flex-end;gap:4px;}
+.g-sm-footer-btn{padding:4px 12px;background:linear-gradient(180deg,#3a7ae8 0%,#1e55c0 100%);border:1px solid #0a2880;border-radius:3px;color:#fff;font-size:11px;cursor:pointer;}
+.g-win{position:absolute;background:#ece9d8;border:1px solid #0831a0;border-radius:8px 8px 0 0;box-shadow:3px 3px 8px rgba(0,0,0,0.5);z-index:100;display:none;flex-direction:column;min-width:280px;overflow:hidden;}
+.g-win.open{display:flex;}
+.g-titlebar{background:linear-gradient(180deg,#0058e0 0%,#3a93ff 3%,#288eff 6%,#127bdc 10%,#1070d4 90%,#0058d0 100%);padding:5px 6px 5px 8px;display:flex;align-items:center;justify-content:space-between;user-select:none;cursor:default;flex-shrink:0;border-radius:7px 7px 0 0;border-bottom:1px solid #0540a0;}
+.g-title-left{display:flex;align-items:center;gap:5px;overflow:hidden;flex:1;}
+.g-title-icon{font-size:13px;flex-shrink:0;}
+.g-title-text{font-size:12px;font-weight:bold;color:#fff;text-shadow:0 1px 2px rgba(0,0,0,0.5);white-space:nowrap;overflow:hidden;}
+.g-win-btns{display:flex;gap:2px;flex-shrink:0;margin-left:6px;}
+.g-wbtn{width:21px;height:21px;border-radius:3px;border:1px solid;font-size:11px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-weight:bold;}
+.g-wbtn-min{background:linear-gradient(180deg,#f0d080 0%,#d4a820 100%);border-color:#8a6800;color:#000;}
+.g-wbtn-min:hover{filter:brightness(1.15);}
+.g-wbtn-close{background:linear-gradient(180deg,#f08080 0%,#d82020 100%);border-color:#880000;color:#fff;}
+.g-wbtn-close:hover{filter:brightness(1.15);}
+.g-menubar{background:#ece9d8;border-bottom:1px solid #aaa;padding:1px 4px;display:flex;flex-shrink:0;}
+.g-mitem{padding:3px 8px;font-size:11px;cursor:pointer;border-radius:3px;}
+.g-mitem:hover{background:#316ac5;color:#fff;}
+#g-drop-win{top:10px;left:50%;transform:translateX(-50%);width:min(440px,calc(100vw - 90px));max-height:calc(100% - 52px);}
+#g-drop-body{overflow-y:auto;max-height:calc(100vh - 150px);padding:8px;background:#fff;}
+.g-tx-header{background:linear-gradient(90deg,#000080,#1084d0);color:#fff;padding:6px 10px;margin-bottom:10px;font-size:10px;letter-spacing:0.08em;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:4px;font-family:'Share Tech Mono',monospace;}
+.g-tx-blink{animation:txblink 1.2s step-end infinite;}
+@keyframes txblink{50%{opacity:0;}}
+.g-member-badge{background:#006600;color:#fff;font-size:9px;padding:2px 6px;letter-spacing:0.1em;}
+.g-w-name{font-size:22px;font-weight:900;color:#000080;line-height:1;margin-bottom:4px;}
+.g-w-badge{display:inline-block;background:#000080;color:#fff;font-size:10px;padding:2px 10px;margin-bottom:12px;}
+.g-w-section{margin-bottom:12px;}
+.g-w-label{font-size:10px;color:#808080;text-transform:uppercase;letter-spacing:0.1em;margin-bottom:4px;border-bottom:1px solid #e0e0e0;padding-bottom:2px;}
+.g-w-val{font-size:12px;color:#000;line-height:1.6;}
+.g-w-val.lore{font-style:italic;color:#333;}
+.g-w-hr{border:none;border-top:1px solid #ddd;margin:10px 0;}
+.notes-row{display:flex;flex-wrap:wrap;gap:4px;margin-top:4px;}
+.ntag{border:1px solid #000080;color:#000080;font-size:10px;padding:3px 8px;}
+.g-brew-tabs{display:flex;margin-bottom:10px;}
+.g-brew-tab{flex:1;padding:5px;text-align:center;font-size:11px;background:#ece9d8;border:1px solid #aaa;cursor:pointer;}
+.g-brew-tab.active{background:#fff;border-bottom:1px solid #fff;font-weight:bold;color:#000080;}
+.brew-gated{background:#f8f8f8;border:1px solid #ddd;padding:16px;text-align:center;border-radius:3px;}
+.brew-gated-icon{font-size:28px;margin-bottom:8px;}
+.brew-gated-title{font-size:12px;font-weight:bold;color:#000080;margin-bottom:6px;}
+.brew-gated-msg{font-size:11px;color:#333;line-height:1.6;margin-bottom:10px;}
+.brew-gated-badge{display:inline-block;background:#ece9d8;border:1px solid #aaa;font-family:'Share Tech Mono',monospace;font-size:9px;padding:3px 10px;color:#000;letter-spacing:0.1em;}
+#g-drop-statusbar{border-top:1px solid #aaa;display:flex;flex-shrink:0;background:#ece9d8;}
+.g-sb-panel{flex:1;padding:2px 6px;font-size:10px;color:#000;border-right:1px solid #aaa;white-space:nowrap;font-family:'Share Tech Mono',monospace;}
+.g-sb-panel:last-child{border-right:none;}
+#g-changelog-win{top:30px;left:50%;transform:translateX(-50%);width:min(380px,calc(100vw - 90px));max-height:calc(100% - 60px);}
+#g-changelog-body{padding:8px;overflow-y:auto;max-height:300px;background:#fff;}
+.cl-line{font-size:11px;line-height:1.9;color:#000;font-family:'Share Tech Mono',monospace;}
+.cl-line.head{color:#000080;font-weight:bold;margin-top:6px;}
+.cl-line.dim{color:#808080;}
+#g-denied-win{top:50%;left:50%;transform:translate(-50%,-50%);width:min(300px,calc(100% - 20px));}
+#g-denied-body{padding:14px;display:flex;gap:12px;align-items:flex-start;background:#fff;}
+.g-denied-icon{font-size:32px;flex-shrink:0;}
+.g-denied-text{font-size:12px;color:#000;line-height:1.6;}
+.g-denied-text strong{display:block;margin-bottom:4px;font-size:13px;}
+#g-denied-ok{display:block;margin:0 auto 10px;padding:4px 24px;background:linear-gradient(180deg,#ece9d8 0%,#c8c4b0 100%);border:1px solid #888;border-radius:3px;font-size:12px;cursor:pointer;}
+#g-recycle-win{top:50%;left:50%;transform:translate(-50%,-50%);width:min(300px,calc(100% - 20px));}
+#g-recycle-body{padding:14px;display:flex;gap:12px;align-items:flex-start;background:#fff;}
+.g-recycle-icon{font-size:32px;flex-shrink:0;}
+.g-recycle-text{font-size:12px;color:#000;line-height:1.6;}
+.g-recycle-text strong{display:block;margin-bottom:4px;font-size:13px;}
+#g-recycle-ok{display:block;margin:0 auto 10px;padding:4px 24px;background:linear-gradient(180deg,#ece9d8 0%,#c8c4b0 100%);border:1px solid #888;border-radius:3px;font-size:12px;cursor:pointer;}
+#g-bean-win{top:30px;left:50%;transform:translateX(-50%);width:min(250px,calc(100% - 100px));}
+#g-bean-area{padding:6px;background:#ece9d8;}
+#g-bean-info{display:flex;align-items:center;justify-content:space-between;background:#000;border:2px inset #888;padding:4px 8px;margin-bottom:5px;}
+#g-bean-counter,#g-bean-timer{color:#f00;font-family:'Share Tech Mono',monospace;font-size:18px;font-weight:bold;background:#000;padding:2px 4px;}
+#g-bean-reset{cursor:pointer;font-size:18px;}
+#g-bean-grid{display:grid;border:2px solid #888;}
+.bcell{width:24px;height:24px;background:#ece9d8;border:2px solid;border-color:#fff #808080 #808080 #fff;display:flex;align-items:center;justify-content:center;font-size:11px;cursor:pointer;user-select:none;font-weight:bold;}
+.bcell.revealed{background:#c8c4b0;border:1px solid #999;cursor:default;}
+.bcell.boom{background:#f00;}
+.n1{color:#0000ff;}.n2{color:#008000;}.n3{color:#ff0000;}.n4{color:#000080;}.n5{color:#800000;}
+#ghost-exit{position:absolute;top:8px;right:8px;z-index:700;background:linear-gradient(180deg,#f08080 0%,#d82020 100%);border:1px solid #880000;border-radius:3px;font-size:11px;font-weight:bold;padding:3px 12px;cursor:pointer;color:#fff;}
+#ghost-exit:hover{filter:brightness(1.1);}
+
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+#hero{animation:fadeIn 1s ease forwards;}
+</style>
+</head>
+<body>
+
+<section id="hero">
+  <img id="hero-img" src="4k_office.jpg" alt="Dös Coffee Club" draggable="false">
+
+  <!-- Dot layer — width set by JS to match rendered image width -->
+  <div id="dot-layer">
+
+    <!-- Each dot: .interactive-point > .hit-area + .dialog-box + .pulse-ring -->
+    <!-- Positions as % of dot-layer (= image dimensions) -->
+
+    <div class="interactive-point" id="dot-how" style="left:23.0%;top:44.0%">
+      <div class="hit-area"></div>
+      <span class="dialog-box">How It Works</span>
+      <div class="pulse-ring"></div>
+    </div>
+
+    <div class="interactive-point" id="dot-os" style="left:51.0%;top:42.0%">
+      <div class="hit-area"></div>
+      <span class="dialog-box">DÖS OS</span>
+      <div class="pulse-ring"></div>
+    </div>
+
+    <div class="interactive-point" id="dot-about" style="left:69.0%;top:48.0%">
+      <div class="hit-area"></div>
+      <span class="dialog-box">About</span>
+      <div class="pulse-ring"></div>
+    </div>
+
+    <div class="interactive-point" id="dot-drops" style="left:90.0%;top:66.0%">
+      <div class="hit-area"></div>
+      <span class="dialog-box">Drop Archive</span>
+      <div class="pulse-ring"></div>
+    </div>
+
+    <div class="interactive-point" id="dot-faq" style="left:74.0%;top:11.0%">
+      <div class="hit-area"></div>
+      <span class="dialog-box">FAQ</span>
+      <div class="pulse-ring"></div>
+    </div>
+
+  </div>
+</section>
+
+<header id="header">
+  <button id="hamburger" aria-label="Menu"><span></span><span></span><span></span></button>
+  <div id="logo">dös</div>
+  <div id="clock-hero"></div>
+</header>
+
+<div id="signup-bar">
+  <button id="signup-btn">Join the Club</button>
+  <div id="signup-hint">membership is free &nbsp;·&nbsp; text-to-order</div>
+</div>
+
+<div id="overlay-bg"></div>
+
+<!-- FLOATING XP WINDOWS -->
+<div id="how-win" class="xp-win">
+  <div class="xp-titlebar"><div class="xp-title-left"><span class="xp-title-icon">☕</span><span class="xp-title-text">How It Works — DÖS Coffee Club</span></div><div class="xp-win-btns"><div class="xp-wbtn xp-wbtn-min" data-key="how" data-action="min">_</div><div class="xp-wbtn xp-wbtn-close" data-key="how" data-action="close">✕</div></div></div>
+  <div class="xp-menubar"><span class="xp-mitem">File</span><span class="xp-mitem">View</span><span class="xp-mitem">Help</span></div>
+  <div class="xp-body" id="how-body"></div>
+  <div class="xp-statusbar"><div class="xp-sb">how_it_works.exe</div><div class="xp-sb">doscoffeeclub.com</div></div>
+</div>
+<div id="drops-win" class="xp-win">
+  <div class="xp-titlebar"><div class="xp-title-left"><span class="xp-title-icon">📋</span><span class="xp-title-text">Drop Archive — The Logbook</span></div><div class="xp-win-btns"><div class="xp-wbtn xp-wbtn-min" data-key="drops" data-action="min">_</div><div class="xp-wbtn xp-wbtn-close" data-key="drops" data-action="close">✕</div></div></div>
+  <div class="xp-menubar"><span class="xp-mitem">File</span><span class="xp-mitem">View</span><span class="xp-mitem">Help</span></div>
+  <div class="xp-body" id="drops-body"></div>
+  <div class="xp-statusbar"><div class="xp-sb">logbook.exe</div><div class="xp-sb">doscoffeeclub.com</div></div>
+</div>
+<div id="about-win" class="xp-win">
+  <div class="xp-titlebar"><div class="xp-title-left"><span class="xp-title-icon">📄</span><span class="xp-title-text">About — DÖS Coffee Club</span></div><div class="xp-win-btns"><div class="xp-wbtn xp-wbtn-min" data-key="about" data-action="min">_</div><div class="xp-wbtn xp-wbtn-close" data-key="about" data-action="close">✕</div></div></div>
+  <div class="xp-menubar"><span class="xp-mitem">File</span><span class="xp-mitem">View</span><span class="xp-mitem">Help</span></div>
+  <div class="xp-body" id="about-body"></div>
+  <div class="xp-statusbar"><div class="xp-sb">about.txt</div><div class="xp-sb">doscoffeeclub.com</div></div>
+</div>
+<div id="faq-win" class="xp-win">
+  <div class="xp-titlebar"><div class="xp-title-left"><span class="xp-title-icon">❓</span><span class="xp-title-text">FAQ — DÖS Coffee Club</span></div><div class="xp-win-btns"><div class="xp-wbtn xp-wbtn-min" data-key="faq" data-action="min">_</div><div class="xp-wbtn xp-wbtn-close" data-key="faq" data-action="close">✕</div></div></div>
+  <div class="xp-menubar"><span class="xp-mitem">File</span><span class="xp-mitem">View</span><span class="xp-mitem">Help</span></div>
+  <div class="xp-body" id="faq-body"></div>
+  <div class="xp-statusbar"><div class="xp-sb">faq.txt</div><div class="xp-sb">doscoffeeclub.com</div></div>
+</div>
+
+<!-- INTERNET CAFÉ -->
+<div id="cafe-win" class="xp-win">
+  <div class="xp-titlebar"><div class="xp-title-left"><span class="xp-title-icon">🕹️</span><span class="xp-title-text" id="cafe-title-text">Internet Café — Classic Games</span></div><div class="xp-win-btns"><div class="xp-wbtn xp-wbtn-close" onclick="closeCafe()">✕</div></div></div>
+  <div class="xp-menubar"><span class="xp-mitem">File</span><span class="xp-mitem">Games</span><span class="xp-mitem">Help</span></div>
+  <div class="xp-body" style="padding:0;display:flex;flex-direction:column;">
+    <div id="cafe-game-list">
+      <div class="cafe-list-header">INTERNET CAFÉ — SELECT A GAME</div>
+      <div class="g-game-item" onclick="launchGame('https://archive.org/embed/msdos_Oregon_Trail_The_1990','The Oregon Trail')"><div class="g-game-icon">🪓</div><div class="g-game-info"><div class="g-game-name">The Oregon Trail</div><div class="g-game-desc">MECC, 1990 — You have died of dysentery.</div></div><button class="g-game-play">▶ Play</button></div>
+      <div class="g-game-item" onclick="launchGame('https://archive.org/embed/msdos_Tetris_1986','Tetris')"><div class="g-game-icon">🟦</div><div class="g-game-info"><div class="g-game-name">Tetris</div><div class="g-game-desc">AcademySoft, 1986 — The original.</div></div><button class="g-game-play">▶ Play</button></div>
+      <div class="g-game-item" onclick="launchGame('https://archive.org/embed/msdos_Wolfenstein_3D_1992','Wolfenstein 3D')"><div class="g-game-icon">🔫</div><div class="g-game-info"><div class="g-game-name">Wolfenstein 3D</div><div class="g-game-desc">id Software, 1992 — The grandfather of FPS.</div></div><button class="g-game-play">▶ Play</button></div>
+      <div class="g-game-item" onclick="launchGame('https://archive.org/embed/msdos_Pac-Man_1983','Pac-Man')"><div class="g-game-icon">👾</div><div class="g-game-info"><div class="g-game-name">Pac-Man</div><div class="g-game-desc">Namco, 1983 — Waka waka waka.</div></div><button class="g-game-play">▶ Play</button></div>
+    </div>
+    <div id="cafe-iframe-area">
+      <div id="cafe-back-bar"><button id="cafe-back-btn" onclick="cafeShowList()">← Back to Games</button><span id="cafe-game-label"></span></div>
+      <iframe id="cafe-iframe" src="" frameborder="0" allowfullscreen></iframe>
+    </div>
+  </div>
+</div>
+
+<!-- MOBILE NOTICE -->
+<div id="cafe-mobile-win" class="xp-win">
+  <div class="xp-titlebar"><div class="xp-title-left"><span class="xp-title-icon">🕹️</span><span class="xp-title-text">Internet Café</span></div><div class="xp-win-btns"><div class="xp-wbtn xp-wbtn-close" onclick="closeMobileCafe()">✕</div></div></div>
+  <div style="padding:16px;background:#fff;"><p style="font-size:12px;color:#000;line-height:1.7;margin-bottom:12px;"><strong style="color:#000080;">Desktop Only Experience</strong><br><br>Internet Café requires a keyboard and mouse. Visit on a desktop or laptop to play.</p><button onclick="closeMobileCafe()" style="display:block;width:100%;background:linear-gradient(180deg,#316ac5 0%,#1a4aaa 100%);color:#fff;border:1px solid #0831a0;border-radius:3px;font-size:12px;padding:7px;cursor:pointer;">OK</button></div>
+</div>
+
+<!-- NAV DRAWER -->
+<nav id="nav-drawer">
+  <div id="nav-titlebar"><div id="nav-avatar">☕</div><div id="nav-title-name">Dös Coffee Club</div></div>
+  <div id="nav-body">
+    <a class="nav-link" data-panel="how"><span class="nav-icon">☕</span>How It Works</a>
+    <a class="nav-link" data-panel="drops"><span class="nav-icon">📋</span>Drop Archive</a>
+    <a class="nav-link" data-panel="about"><span class="nav-icon">📄</span>About</a>
+    <a class="nav-link" data-panel="faq"><span class="nav-icon">❓</span>FAQ</a>
+    <div class="nav-divider"></div>
+    <a class="nav-link" href="https://instagram.com/drinkdoscoffee" target="_blank"><span class="nav-icon">📷</span>Instagram ↗</a>
+    <a class="nav-link" href="https://soundcloud.com" target="_blank"><span class="nav-icon">🎵</span>Mixes ↗</a>
+    <div class="nav-divider"></div>
+    <a class="nav-link"><span class="nav-icon">🔒</span>Privacy</a>
+    <a class="nav-link"><span class="nav-icon">✉️</span>Contact</a>
+  </div>
+  <div id="nav-footer"><div class="nav-footer-btn" onclick="closeNav();openGhostDesktop()">🖥️ DÖS OS</div></div>
+</nav>
+
+<!-- SIGNUP MODAL -->
+<div id="signup-modal">
+  <div id="signup-win-modal">
+    <div id="signup-title"><span id="signup-title-txt">📱 Join Dös Coffee Club</span><div id="signup-close">✕</div></div>
+    <div id="signup-body"><p>Drop your digits. We'll text you when a new coffee lands.<br>No spam. No fees. Just rare coffee on your phone.</p><input type="tel" placeholder="+1 (215) 000-0000"><button id="signup-submit">OK — Send my number</button></div>
+  </div>
+</div>
+
+<!-- GHOST DESKTOP -->
+<div id="ghost-wrap">
+  <div id="ghost-bg"></div>
+  <button id="ghost-exit">✕ Exit DÖS OS</button>
+  <div id="g-icon-col">
+    <div class="g-icon" onclick="window.open('https://instagram.com/doscoffeeclub','_blank')">
+      <div class="g-icon-box"><svg width="40" height="40" viewBox="0 0 32 32" style="image-rendering:pixelated;" xmlns="http://www.w3.org/2000/svg"><rect x="2" y="10" width="28" height="18" fill="#c0c0c0"/><rect x="3" y="11" width="26" height="16" fill="#808080"/><rect x="6" y="7" width="10" height="4" fill="#c0c0c0"/><rect x="7" y="8" width="8" height="3" fill="#808080"/><rect x="20" y="7" width="6" height="4" fill="#c0c0c0"/><rect x="21" y="8" width="4" height="3" fill="#ffff00"/><rect x="10" y="13" width="12" height="12" fill="#404040"/><rect x="11" y="14" width="10" height="10" fill="#202020"/><rect x="12" y="15" width="8" height="8" fill="#303030"/><rect x="13" y="16" width="6" height="6" fill="#101010"/><rect x="13" y="16" width="2" height="2" fill="#fff" opacity="0.6"/><rect x="22" y="11" width="4" height="2" fill="#e0e0e0"/><rect x="23" y="10" width="2" height="2" fill="#e0e0e0"/><rect x="4" y="12" width="4" height="3" fill="#404040"/><rect x="5" y="13" width="2" height="1" fill="#88aaff"/></svg></div>
+      <div class="g-icon-label">dos_gram.exe</div>
+    </div>
+    <div class="g-icon" onclick="gOpenBeansweeper()"><div class="g-icon-box">☕</div><div class="g-icon-label">beansweeper.exe</div></div>
+    <div class="g-icon" onclick="gOpenDenied()"><div class="g-icon-box">📁</div><div class="g-icon-label">classified.exe</div></div>
+    <div class="g-icon" onclick="gOpenChangelog()"><div class="g-icon-box">📄</div><div class="g-icon-label">changelog.txt</div></div>
+    <div class="g-icon" onclick="gOpenRecycle()"><div class="g-icon-box">🗑️</div><div class="g-icon-label">bad_coffee.exe</div></div>
+    <div class="g-icon" onclick="openCafe()"><div class="g-icon-box">🕹️</div><div class="g-icon-label">internet_cafe.exe</div></div>
+  </div>
+
+  <div class="g-win open" id="g-drop-win">
+    <div class="g-titlebar"><div class="g-title-left"><span class="g-title-icon">📡</span><span class="g-title-text">SIGNAL_DECODED — DROP_007.exe</span></div><div class="g-win-btns"><div class="g-wbtn g-wbtn-min" onclick="gMinWin('g-drop-win','📡 DROP_007')">_</div><div class="g-wbtn g-wbtn-close" onclick="gCloseWin('g-drop-win')">✕</div></div></div>
+    <div class="g-menubar"><span class="g-mitem">File</span><span class="g-mitem">Intel</span><span class="g-mitem">Protocol</span><span class="g-mitem">Help</span></div>
+    <div id="g-drop-body">
+      <div class="g-tx-header"><span>TRANSMISSION RECEIVED — <span id="g-tx-time"></span></span><span class="g-member-badge">MEMBERS ONLY</span><span class="g-tx-blink">▌</span></div>
+      <div class="g-w-section"><div class="g-w-label">Asset Designation</div><div class="g-w-name">THE BAKERY</div><div class="g-w-badge">FULLY WASHED</div></div>
+      <div class="g-w-section"><div class="g-w-label">Field Intelligence</div><div class="g-w-val lore">Asset sourced from La Curva Farm, Estado de Merida, Venezuela. 1,700 meters above sea level. Varieties: Villa Nueva and Castillo — hand-picked, bean by bean, fully washed. Venezuelan specialty has been off the radar — not for lack of quality, but lack of access. This lot changes that. Handle with care.</div></div>
+      <div class="g-w-section"><div class="g-w-label">Origin Coordinates</div><div class="g-w-val">Estado De Merida, Venezuela — 1,700 masl<br>Finca La Curva</div></div>
+      <div class="g-w-hr"></div>
+      <div class="g-w-section"><div class="g-w-label">Sensory Analysis</div><div class="notes-row"><div class="ntag">Baked Goods</div><div class="ntag">Vanilla</div><div class="ntag">Mandarin</div><div class="ntag">Cacao Nibs</div></div></div>
+      <div class="g-w-hr"></div>
+      <div class="g-w-section"><div class="g-w-label">Preparation Protocol</div><div class="g-brew-tabs"><div class="g-brew-tab active">Filter</div><div class="g-brew-tab">Espresso</div></div><div class="brew-gated"><div class="brew-gated-icon">🔒</div><div class="brew-gated-title">PREPARATION PROTOCOL LOCKED</div><div class="brew-gated-msg">Brew guide access requires NFC authentication.<br>Tap your Dös Coffee bag to unlock this terminal.</div><div class="brew-gated-badge">NFC TAG REQUIRED</div></div></div>
+      <div class="g-w-hr"></div>
+      <div class="g-w-section"><div class="g-w-label">Batch Intelligence</div><div class="g-w-val">Roast Date: March 2026<br>Roasted in Philadelphia, PA<br>Batch size: 50 units — Drop 007</div></div>
+    </div>
+    <div id="g-drop-statusbar"><div class="g-sb-panel">Drop 007 / 2026</div><div class="g-sb-panel">Preview mode</div><div class="g-sb-panel">doscoffeeclub.com</div></div>
+  </div>
+
+  <div class="g-win" id="g-changelog-win">
+    <div class="g-titlebar"><div class="g-title-left"><span class="g-title-icon">📄</span><span class="g-title-text">changelog.txt</span></div><div class="g-win-btns"><div class="g-wbtn g-wbtn-close" onclick="gCloseWin('g-changelog-win')">✕</div></div></div>
+    <div id="g-changelog-body">
+      <div class="cl-line head">DÖS OS — Official Changelog</div><div class="cl-line dim">————————————————————</div>
+      <div class="cl-line head">v2.7.0 — March 2026</div><div class="cl-line">- Added The Bakery drop support</div><div class="cl-line">- Migrated origin database to Venezuela servers</div><div class="cl-line">- Updated NFC authentication to v2.7</div><div class="cl-line">- Deprecated anaerobic module for this batch</div>
+      <div class="cl-line head">v2.6.0 — March 2026</div><div class="cl-line">- Added El Paraíso drop support</div><div class="cl-line">- Fixed bug where coffee tasted bad</div><div class="cl-line">- Improved NFC authentication latency</div><div class="cl-line">- Removed decaf module entirely</div>
+      <div class="cl-line head">v2.5.1 — January 2026</div><div class="cl-line">- Patched exploit allowing non-members to access drop data</div><div class="cl-line">- Increased bloom time by 5 seconds</div><div class="cl-line">- Added Beansweeper (community request)</div>
+      <div class="cl-line head">v1.0.0 — Initial Release</div><div class="cl-line">- Launched DÖS OS</div><div class="cl-line">- Nobody knew what this was yet</div>
+      <div class="cl-line dim">————————————————————</div><div class="cl-line dim">© 2026 Dös Coffee Club. All rights reserved.</div>
+    </div>
+  </div>
+
+  <div class="g-win" id="g-denied-win">
+    <div class="g-titlebar"><div class="g-title-left"><span class="g-title-icon">🔒</span><span class="g-title-text">classified.exe</span></div><div class="g-win-btns"><div class="g-wbtn g-wbtn-close" onclick="gCloseWin('g-denied-win')">✕</div></div></div>
+    <div id="g-denied-body"><div class="g-denied-icon">🚫</div><div class="g-denied-text"><strong>ACCESS DENIED</strong>Clearance level insufficient.<br><br>This folder contains information beyond your current authorization.<br><br><em>Error code: COFFEE_TOO_CLASSIFIED</em></div></div>
+    <button id="g-denied-ok" onclick="gCloseWin('g-denied-win')">OK</button>
+  </div>
+
+  <div class="g-win" id="g-recycle-win">
+    <div class="g-titlebar"><div class="g-title-left"><span class="g-title-icon">🗑️</span><span class="g-title-text">bad_coffee.exe</span></div><div class="g-win-btns"><div class="g-wbtn g-wbtn-close" onclick="gCloseWin('g-recycle-win')">✕</div></div></div>
+    <div id="g-recycle-body"><div class="g-recycle-icon">🗑️</div><div class="g-recycle-text"><strong>Recycle Bin — Empty</strong>The Recycle Bin is empty.<br><br>There is no bad coffee here.</div></div>
+    <button id="g-recycle-ok" onclick="gCloseWin('g-recycle-win')">OK</button>
+  </div>
+
+  <div class="g-win" id="g-bean-win">
+    <div class="g-titlebar"><div class="g-title-left"><span class="g-title-icon">☕</span><span class="g-title-text">Beansweeper</span></div><div class="g-win-btns"><div class="g-wbtn g-wbtn-min" onclick="gMinWin('g-bean-win','☕ Beansweeper')">_</div><div class="g-wbtn g-wbtn-close" onclick="gCloseWin('g-bean-win')">✕</div></div></div>
+    <div id="g-bean-area"><div id="g-bean-info"><span id="g-bean-counter">010</span><span id="g-bean-reset" onclick="gInitBean()">😤</span><span id="g-bean-timer">000</span></div><div id="g-bean-grid"></div></div>
+  </div>
+
+  <div id="g-start-menu">
+    <div id="g-sm-header"><div id="g-sm-avatar">☕</div><div id="g-sm-name">Dös Member</div></div>
+    <div id="g-sm-body">
+      <div id="g-sm-left">
+        <div class="g-sm-item" onclick="gRestoreWin('g-drop-win');gCloseStartMenu()"><span class="g-sm-icon">📡</span><span class="g-sm-text">Drop 007</span></div>
+        <div class="g-sm-item" onclick="gOpenBeansweeper();gCloseStartMenu()"><span class="g-sm-icon">☕</span><span class="g-sm-text">Beansweeper</span></div>
+        <div class="g-sm-item" onclick="openCafe();gCloseStartMenu()"><span class="g-sm-icon">🕹️</span><span class="g-sm-text">Internet Café</span></div>
+        <div class="g-sm-item" onclick="window.open('https://instagram.com/doscoffeeclub','_blank');gCloseStartMenu()"><span class="g-sm-icon">📷</span><span class="g-sm-text">dos_gram.exe</span></div>
+        <div class="g-sm-divider"></div>
+        <div class="g-sm-item" onclick="gOpenChangelog();gCloseStartMenu()"><span class="g-sm-icon">📄</span><span class="g-sm-text">changelog.txt</span></div>
+        <div class="g-sm-item" onclick="gOpenDenied();gCloseStartMenu()"><span class="g-sm-icon">📁</span><span class="g-sm-text">classified.exe</span></div>
+      </div>
+      <div id="g-sm-right"><div class="g-sm-item" onclick="gOpenRecycle();gCloseStartMenu()"><span class="g-sm-icon">🗑️</span><span class="g-sm-text">bad_coffee.exe</span></div></div>
+    </div>
+    <div id="g-sm-footer"><div class="g-sm-footer-btn" onclick="closeGhostDesktop();gCloseStartMenu()">🚪 Exit DÖS OS</div></div>
+  </div>
+
+  <div id="g-taskbar">
+    <button id="g-start-btn" onclick="gToggleStartMenu()">⊞ start</button>
+    <div id="g-tb-sep"></div>
+    <div id="g-task-buttons"></div>
+    <div id="g-clock">12:00 PM</div>
+  </div>
+</div>
+
+<!-- TEMPLATES -->
+<template id="tpl-how"><div class="xp-inner"><div class="xp-tx-header">HOW IT WORKS — DÖS COFFEE CLUB</div><div class="how-step-row"><div class="how-step-num">01</div><div class="how-step-txt"><strong>Sign up with your number.</strong> Membership is free. No monthly fees, ever.</div></div><div class="how-step-row"><div class="how-step-num">02</div><div class="how-step-txt"><strong>We text you when a new coffee drops.</strong> Small-batch, rare origins, sourced by us.</div></div><div class="how-step-row"><div class="how-step-num">03</div><div class="how-step-txt"><strong>Reply yes.</strong> Your order processes. Coffee arrives at your door.</div></div><button class="how-cta" id="how-join-btn">Join the Club →</button></div></template>
+
+<template id="tpl-drops"><div class="xp-inner"><div class="lb-header">DROP ARCHIVE — THE LOGBOOK</div><div class="lb-row" data-idx="0"><span class="lb-num">DROP 007</span><span class="lb-name">La Curva Farm, Venezuela</span><span class="lb-dots"></span><span class="lb-status active">[ACTIVE]</span></div><div class="lb-detail" data-detail="0"><strong>Origin:</strong> Estado de Merida, Venezuela<br><strong>Varieties:</strong> Villa Nueva &amp; Castillo<br><strong>Process:</strong> Fully Washed<br><strong>Notes:</strong> Baked Goods, Vanilla, Mandarin, Cacao Nibs<br><div class="lb-terminal-btn" data-ghost="true">Access Terminal →</div></div><div class="lb-row" data-idx="1"><span class="lb-num">DROP 006</span><span class="lb-name">FPO Farm, Colombia</span><span class="lb-dots"></span><span class="lb-status archive">[ARCHIVED]</span></div><div class="lb-detail" data-detail="1"><strong>Origin:</strong> FPO<br><strong>Process:</strong> Natural</div><div class="lb-row" data-idx="2"><span class="lb-num">DROP 005</span><span class="lb-name">FPO Farm, Ethiopia</span><span class="lb-dots"></span><span class="lb-status archive">[ARCHIVED]</span></div><div class="lb-detail" data-detail="2">FPO — placeholder copy.</div><div class="lb-row" data-idx="3"><span class="lb-num">DROP 004</span><span class="lb-name">FPO Farm, Guatemala</span><span class="lb-dots"></span><span class="lb-status archive">[ARCHIVED]</span></div><div class="lb-detail" data-detail="3">FPO — placeholder copy.</div><div class="lb-row" data-idx="4"><span class="lb-num">DROP 003</span><span class="lb-name">FPO Farm, Kenya</span><span class="lb-dots"></span><span class="lb-status archive">[ARCHIVED]</span></div><div class="lb-detail" data-detail="4">FPO — placeholder copy.</div><div class="lb-row" data-idx="5"><span class="lb-num">DROP 002</span><span class="lb-name">FPO Farm, Costa Rica</span><span class="lb-dots"></span><span class="lb-status archive">[ARCHIVED]</span></div><div class="lb-detail" data-detail="5">FPO — placeholder copy.</div><div class="lb-row" data-idx="6"><span class="lb-num">DROP 001</span><span class="lb-name">FPO Farm, Peru</span><span class="lb-dots"></span><span class="lb-status archive">[ARCHIVED]</span></div><div class="lb-detail" data-detail="6">FPO — placeholder copy.</div></div></template>
+
+<template id="tpl-about"><div class="xp-inner"><div class="xp-tx-header">ABOUT DÖS COFFEE CLUB</div><div class="about-section"><div class="about-label">Mission</div><div class="about-val">Dös is all about seeking out the world's most interesting coffees and learning about the craft behind the bean — from farming to processing to roasting and brewing.</div></div><div class="about-section"><div class="about-label">Philosophy</div><div class="about-val italic">"In the right hands, a simple bean blooms into something marvelous."</div></div><div class="about-section"><div class="about-label">The Club</div><div class="about-val">We focus on passionate origins and truly unique processing methods. Join and we'll be your passport to a world of coffee you've never known before. Membership is free.</div></div><div class="about-section"><div class="about-label">Founded By</div><div class="about-val">Evan Wickersham — Philadelphia, PA<br><span style="color:#808080;font-size:11px;">FPO — full story coming.</span></div></div></div></template>
+
+<template id="tpl-faq"><div class="xp-inner"><div class="xp-tx-header">FREQUENTLY ASKED QUESTIONS</div><div class="faq-row"><div class="faq-q">How do I sign up?</div><div class="faq-a">Enter your phone number using the "Join the Club" button. Before your first order you'll provide address and payment info — you're never charged until you order coffee.</div></div><div class="faq-row"><div class="faq-q">How does ordering work?</div><div class="faq-a">After signing up, you'll get a text when we drop a new coffee. Reply "Yes" and your order processes. Easy.</div></div><div class="faq-row"><div class="faq-q">Whole bean or pre-ground?</div><div class="faq-a">Whole bean only. We don't pre-grind — freshness isn't negotiable.</div></div><div class="faq-row"><div class="faq-q">How much is shipping?</div><div class="faq-a">Expect $5–6 per bag shipped via USPS, as soon as the coffee is roasted.</div></div><div class="faq-row"><div class="faq-q">How do I cancel?</div><div class="faq-a">No subscription, no monthly fees — ever. To leave, text "STOP".</div></div><div class="faq-row"><div class="faq-q">How do I update my info?</div><div class="faq-a">Fill out the address and payment form again with the same phone number.</div></div></div></template>
+
+<script>
+const isMobile=()=>window.innerWidth<768;
+
+// ══════════════════════════════
+// IMAGE + DOT LAYER SIZING
+// Image: height=100vh, width=auto (natural 16:9 aspect)
+// Dot layer must match image rendered width exactly.
+// ══════════════════════════════
+function syncDotLayer(){
+  const img=document.getElementById('hero-img');
+  const layer=document.getElementById('dot-layer');
+  const w=img.offsetWidth;
+  const h=img.offsetHeight;
+  layer.style.width=w+'px';
+  layer.style.height=h+'px';
+}
+const img=document.getElementById('hero-img');
+if(img.complete&&img.naturalWidth>0){syncDotLayer();}
+else{img.addEventListener('load',syncDotLayer);}
+// Also sync on resize (image height=100vh so width changes with vh)
+window.addEventListener('resize',syncDotLayer);
+// Safety
+setTimeout(syncDotLayer,200);
+
+// ══════════════════════════════
+// CLOCKS
+// ══════════════════════════════
+function updateClocks(){
+  const n=new Date();
+  const d=n.toLocaleDateString('en-US',{month:'2-digit',day:'2-digit',year:'numeric'});
+  const t=n.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit',hour12:true,timeZoneName:'short'});
+  document.getElementById('clock-hero').textContent=d+'   '+t;
+  let h=n.getHours(),m=n.getMinutes(),ap=h>=12?'PM':'AM';
+  h=h%12||12;
+  document.getElementById('g-clock').textContent=h+':'+(m<10?'0':'')+m+' '+ap;
+  const tx=document.getElementById('g-tx-time');if(tx)tx.textContent=n.toLocaleTimeString();
+}
+updateClocks();setInterval(updateClocks,1000);
+
+// ══════════════════════════════
+// DOT CLICKS
+// ══════════════════════════════
+document.querySelectorAll('.interactive-point').forEach(dot=>{
+  dot.addEventListener('click',()=>{
+    const panel=dot.id.replace('dot-','');
+    if(panel==='os'){openGhostDesktop();return;}
+    if(isMobile()){openNav();return;}
+    const r=dot.getBoundingClientRect();
+    openWin(panel,r.left+r.width/2,r.top+r.height/2);
+  });
+});
+
+// ══════════════════════════════
+// FLOATING XP WINDOWS
+// ══════════════════════════════
+const winEls={
+  how:   document.getElementById('how-win'),
+  drops: document.getElementById('drops-win'),
+  about: document.getElementById('about-win'),
+  faq:   document.getElementById('faq-win'),
+};
+const winBodies={
+  how:   document.getElementById('how-body'),
+  drops: document.getElementById('drops-body'),
+  about: document.getElementById('about-body'),
+  faq:   document.getElementById('faq-body'),
+};
+const WIN_SIZES={how:{w:340,h:230},drops:{w:420,h:350},about:{w:360,h:290},faq:{w:380,h:340}};
+const WIN_OFFSET={how:{dx:-10,dy:16},drops:{dx:-400,dy:16},about:{dx:-350,dy:16},faq:{dx:-350,dy:16}};
+let zTop=110;const getZ=()=>++zTop;
+
+function openWin(key,dotX,dotY){
+  const win=winEls[key];if(!win)return;
+  if(!win._populated){
+    winBodies[key].appendChild(document.getElementById('tpl-'+key).content.cloneNode(true));
+    wireContent(key,winBodies[key]);
+    makeDraggable(win,win.querySelector('.xp-titlebar'));
+    win.addEventListener('mousedown',()=>win.style.zIndex=getZ());
+    win._populated=true;
+  }
+  const sz=WIN_SIZES[key];const off=WIN_OFFSET[key];
+  let x=(dotX||window.innerWidth/2)+(off.dx||0);
+  let y=(dotY||window.innerHeight/2)+(off.dy||0);
+  x=Math.max(10,Math.min(x,window.innerWidth-sz.w-10));
+  y=Math.max(64,Math.min(y,window.innerHeight-sz.h-10));
+  win.style.left=x+'px';win.style.top=y+'px';
+  win.style.width=sz.w+'px';
+  win.style.zIndex=getZ();
+  win.style.display='flex';win.classList.add('open');
+}
+
+function wireContent(key,body){
+  if(key==='how')body.querySelector('#how-join-btn')?.addEventListener('click',openSignup);
+  if(key==='drops'){
+    body.querySelectorAll('.lb-row').forEach(r=>r.addEventListener('click',()=>body.querySelector(`.lb-detail[data-detail="${r.dataset.idx}"]`)?.classList.toggle('open')));
+    body.querySelectorAll('.lb-terminal-btn[data-ghost]').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();openGhostDesktop();}));
+  }
+  if(key==='faq')body.querySelectorAll('.faq-row').forEach(r=>r.querySelector('.faq-q').addEventListener('click',()=>r.classList.toggle('open')));
+}
+
+document.querySelectorAll('.xp-wbtn[data-action]').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    const k=btn.dataset.key,a=btn.dataset.action,w=winEls[k];
+    if(!w)return;
+    if(a==='close'){w.classList.remove('open');w.style.display='none';}
+    if(a==='min'){w.style.display='none';}
+  });
+});
+
+function makeDraggable(win,handle){
+  let sx,sy,ox,oy;
+  handle.addEventListener('mousedown',e=>{
+    if(e.target.classList.contains('xp-wbtn'))return;
+    e.preventDefault();win.style.zIndex=getZ();
+    sx=e.clientX;sy=e.clientY;ox=win.offsetLeft;oy=win.offsetTop;
+    const mm=e=>{win.style.left=(ox+e.clientX-sx)+'px';win.style.top=(oy+e.clientY-sy)+'px';};
+    const mu=()=>{document.removeEventListener('mousemove',mm);document.removeEventListener('mouseup',mu);};
+    document.addEventListener('mousemove',mm);document.addEventListener('mouseup',mu);
+  });
+}
+
+// ══════════════════════════════
+// INTERNET CAFÉ
+// ══════════════════════════════
+const cafeWin=document.getElementById('cafe-win');
+const cafeBdrop=document.createElement('div');
+cafeBdrop.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:449;display:none;';
+document.body.appendChild(cafeBdrop);
+cafeBdrop.addEventListener('click',closeCafe);
+makeDraggable(cafeWin,cafeWin.querySelector('.xp-titlebar'));
+cafeWin.addEventListener('mousedown',()=>cafeWin.style.zIndex=450);
+
+function openCafe(){
+  if(isMobile()){
+    const mw=document.getElementById('cafe-mobile-win');
+    mw.style.display='flex';mw.classList.add('open');
+    cafeBdrop.style.display='block';return;
+  }
+  cafeShowList();
+  cafeWin.style.display='flex';cafeWin.classList.add('open');
+  cafeBdrop.style.display='block';
+}
+function closeCafe(){
+  document.getElementById('cafe-iframe').src='';
+  cafeWin.style.display='none';cafeWin.classList.remove('open');
+  cafeBdrop.style.display='none';
+}
+function closeMobileCafe(){
+  document.getElementById('cafe-mobile-win').style.display='none';
+  document.getElementById('cafe-mobile-win').classList.remove('open');
+  cafeBdrop.style.display='none';
+}
+function launchGame(url,name){
+  document.getElementById('cafe-game-list').style.display='none';
+  document.getElementById('cafe-iframe-area').style.display='flex';
+  document.getElementById('cafe-iframe').src=url;
+  document.getElementById('cafe-game-label').textContent='Now playing: '+name;
+  document.getElementById('cafe-title-text').textContent='Internet Café — '+name;
+}
+function cafeShowList(){
+  document.getElementById('cafe-game-list').style.display='block';
+  document.getElementById('cafe-iframe-area').style.display='none';
+  document.getElementById('cafe-iframe').src='';
+  document.getElementById('cafe-title-text').textContent='Internet Café — Classic Games';
+}
+
+// ══════════════════════════════
+// NAV
+// ══════════════════════════════
+const navDrawer=document.getElementById('nav-drawer');
+const overlayBg=document.getElementById('overlay-bg');
+function openNav(){navDrawer.classList.add('open');overlayBg.classList.add('active');}
+function closeNav(){navDrawer.classList.remove('open');overlayBg.classList.remove('active');}
+document.getElementById('hamburger').addEventListener('click',()=>navDrawer.classList.contains('open')?closeNav():openNav());
+overlayBg.addEventListener('click',closeNav);
+document.querySelectorAll('.nav-link[data-panel]').forEach(l=>l.addEventListener('click',()=>{closeNav();openWin(l.dataset.panel,window.innerWidth/2,window.innerHeight/2);}));
+
+// ══════════════════════════════
+// SIGNUP
+// ══════════════════════════════
+function openSignup(){document.getElementById('signup-modal').classList.add('open');}
+document.getElementById('signup-btn').addEventListener('click',openSignup);
+document.getElementById('signup-close').addEventListener('click',()=>document.getElementById('signup-modal').classList.remove('open'));
+document.getElementById('signup-modal').addEventListener('click',e=>{if(e.target===document.getElementById('signup-modal'))document.getElementById('signup-modal').classList.remove('open');});
+
+// ══════════════════════════════
+// GHOST DESKTOP
+// ══════════════════════════════
+const ghostWrap=document.getElementById('ghost-wrap');
+function openGhostDesktop(){
+  document.getElementById('ghost-bg').style.backgroundImage='url("bliss.webp")';
+  ghostWrap.style.display='flex';
+  requestAnimationFrame(()=>requestAnimationFrame(()=>ghostWrap.classList.add('open')));
+}
+function closeGhostDesktop(){
+  closeCafe();
+  ghostWrap.classList.remove('open');
+  setTimeout(()=>{ghostWrap.style.display='none';},400);
+}
+document.getElementById('ghost-exit').addEventListener('click',closeGhostDesktop);
+function gCloseWin(id){const w=document.getElementById(id);if(w){w.style.display='none';w.classList.remove('open');removeGTask(id);}}
+function gMinWin(id,label){const w=document.getElementById(id);if(w)w.style.display='none';addGTask(id,label);}
+function gRestoreWin(id){const w=document.getElementById(id);if(w){w.style.display='flex';gCloseStartMenu();}}
+function gOpenRecycle(){document.getElementById('g-recycle-win').style.display='flex';}
+function gOpenDenied(){document.getElementById('g-denied-win').style.display='flex';}
+function gOpenChangelog(){document.getElementById('g-changelog-win').style.display='flex';}
+function gOpenBeansweeper(){document.getElementById('g-bean-win').style.display='flex';if(!bInited)gInitBean();}
+const gTasks={};
+function addGTask(id,label){if(gTasks[id])return;const tb=document.getElementById('g-task-buttons');const btn=document.createElement('div');btn.className='g-task-btn';btn.textContent=label;btn.onclick=()=>{gRestoreWin(id);removeGTask(id);};tb.appendChild(btn);gTasks[id]=btn;}
+function removeGTask(id){if(gTasks[id]){gTasks[id].remove();delete gTasks[id];}}
+function gToggleStartMenu(){const sm=document.getElementById('g-start-menu'),b=document.getElementById('g-start-btn');const open=sm.style.display==='flex';sm.style.display=open?'none':'flex';b.classList.toggle('open',!open);}
+function gCloseStartMenu(){document.getElementById('g-start-menu').style.display='none';document.getElementById('g-start-btn').classList.remove('open');}
+document.addEventListener('click',e=>{if(ghostWrap.classList.contains('open')&&!e.target.closest('#g-start-menu')&&!e.target.closest('#g-start-btn'))gCloseStartMenu();});
+
+// ══════════════════════════════
+// BEANSWEEPER
+// ══════════════════════════════
+const ROWS=9,COLS=9,MINES=10;
+let bBoard=[],bRevealed=[],bFlagged=[],bGameOver=false,bInited=false,bTimerVal=0,bTimerInt=null,bFirst=true;
+function gInitBean(){bBoard=[];bRevealed=[];bFlagged=[];bGameOver=false;bFirst=true;clearInterval(bTimerInt);bTimerVal=0;document.getElementById('g-bean-timer').textContent='000';document.getElementById('g-bean-reset').textContent='😤';document.getElementById('g-bean-counter').textContent=String(MINES).padStart(3,'0');for(let i=0;i<ROWS*COLS;i++){bBoard.push(0);bRevealed.push(false);bFlagged.push(false);}gRenderBean();bInited=true;}
+function gPlaceMines(safe){let p=0;while(p<MINES){const i=Math.floor(Math.random()*ROWS*COLS);if(i!==safe&&bBoard[i]!==true){bBoard[i]=true;p++;}}for(let r=0;r<ROWS;r++)for(let c=0;c<COLS;c++){const i=r*COLS+c;if(bBoard[i]===true)continue;let cnt=0;for(let dr=-1;dr<=1;dr++)for(let dc=-1;dc<=1;dc++){const nr=r+dr,nc=c+dc;if(nr>=0&&nr<ROWS&&nc>=0&&nc<COLS&&bBoard[nr*COLS+nc]===true)cnt++;}bBoard[i]=cnt;}}
+function gRenderBean(){const grid=document.getElementById('g-bean-grid');grid.style.gridTemplateColumns=`repeat(${COLS},24px)`;grid.innerHTML='';for(let i=0;i<ROWS*COLS;i++){const cell=document.createElement('div');cell.className='bcell';if(bRevealed[i]){cell.classList.add('revealed');if(bBoard[i]===true){cell.textContent='☕';if(bGameOver)cell.classList.add('boom');}else if(bBoard[i]>0){cell.textContent=bBoard[i];cell.classList.add('n'+bBoard[i]);}}else if(bFlagged[i]){cell.textContent='🚩';}cell.addEventListener('click',()=>gBeanClick(i));cell.addEventListener('contextmenu',e=>{e.preventDefault();gBeanFlag(i);});grid.appendChild(cell);}}
+function gBeanClick(i){if(bGameOver||bRevealed[i]||bFlagged[i])return;if(bFirst){gPlaceMines(i);bFirst=false;bTimerInt=setInterval(()=>{bTimerVal++;document.getElementById('g-bean-timer').textContent=String(Math.min(bTimerVal,999)).padStart(3,'0');},1000);}if(bBoard[i]===true){bRevealed[i]=true;bGameOver=true;clearInterval(bTimerInt);document.getElementById('g-bean-reset').textContent='😵';for(let j=0;j<ROWS*COLS;j++)if(bBoard[j]===true)bRevealed[j]=true;gRenderBean();return;}gFlood(i);gCheckWin();gRenderBean();}
+function gFlood(i){if(i<0||i>=ROWS*COLS||bRevealed[i]||bFlagged[i])return;bRevealed[i]=true;if(bBoard[i]===0){const r=Math.floor(i/COLS),c=i%COLS;for(let dr=-1;dr<=1;dr++)for(let dc=-1;dc<=1;dc++){const nr=r+dr,nc=c+dc;if(nr>=0&&nr<ROWS&&nc>=0&&nc<COLS)gFlood(nr*COLS+nc);}}}
+function gBeanFlag(i){if(bGameOver||bRevealed[i])return;bFlagged[i]=!bFlagged[i];document.getElementById('g-bean-counter').textContent=String(MINES-bFlagged.filter(Boolean).length).padStart(3,'0');gRenderBean();}
+function gCheckWin(){if(bRevealed.filter((r,i)=>!r&&bBoard[i]!==true).length===0){bGameOver=true;clearInterval(bTimerInt);document.getElementById('g-bean-reset').textContent='😎';setTimeout(()=>{document.getElementById('g-recycle-win').querySelector('.g-recycle-text').innerHTML='<strong>You cleared the beans! ☕</strong>Now go make a cup.';gOpenRecycle();},100);}}
+</script>
+</body>
+</html>
