@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -5,7 +6,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Dös Coffee Club</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Playfair+Display:ital,wght@1,700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
 *{margin:0;padding:0;box-sizing:border-box;}
 html,body{width:100%;height:100%;overflow:hidden;background:#000;font-family:Arial,sans-serif;font-size:12px;}
@@ -113,68 +115,82 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;font-family:Ari
   z-index:20;
 }
 
-/* dialog box — tooltip that appears on hover */
+/* dialog box — paper label tooltip that appears on hover */
 .dialog-box{
   position:absolute;
-  bottom:calc(100% + 10px);
+  bottom:calc(100% + 12px);
   left:50%;
-  transform:translateX(-50%) translateY(10px);
-  background:#fff;
-  font-family:'Share Tech Mono',monospace;
-  font-weight:bold;
-  font-size:13px;
-  padding:10px 14px;
-  border-radius:8px;
-  box-shadow:rgba(0,0,0,0.25) 0 0 10px;
+  transform:translateX(-50%) translateY(10px) rotate(-1.5deg);
+  background:#f5edd8;
+  font-family:'Inter','Share Tech Mono',monospace;
+  font-weight:600;
+  font-size:11px;
+  letter-spacing:0.04em;
+  padding:8px 14px 10px 14px;
+  box-shadow:2px 4px 14px rgba(0,0,0,0.45);
   white-space:nowrap;
   opacity:0;
   pointer-events:none;
-  transition:opacity 0.2s ease-in-out, transform 0.2s ease-in-out;
+  transition:opacity 0.18s ease-in-out, transform 0.18s ease-in-out;
   z-index:30;
   text-decoration:none;
-  color:#000;
+  color:#1a1208;
   border:none;
   outline:none;
   cursor:pointer;
+  /* mini ripped edges */
+  clip-path:polygon(
+    0% 4%, 8% 0%, 20% 3%, 35% 0%, 50% 3%, 65% 0%, 80% 3%, 92% 0%, 100% 4%,
+    100% 96%, 92% 100%, 80% 97%, 65% 100%, 50% 97%, 35% 100%, 20% 97%, 8% 100%, 0% 96%
+  );
 }
 /* show dialog on hover, hide pulse ring */
 .interactive-point:hover .dialog-box{
   opacity:1;
   pointer-events:auto;
-  transform:translateX(-50%) translateY(0);
+  transform:translateX(-50%) translateY(0) rotate(-1.5deg);
 }
 .interactive-point:hover .pulse-ring{
   display:none;
 }
 
+/* ── HIDE SCROLLBAR (still scrollable) ── */
+#hero{scrollbar-width:none;}
+#hero::-webkit-scrollbar{display:none;}
+
 /* ── HEADER ── */
+/* Single flex row — hamburger left, logo center, clock right.
+   All share the same container so vertical centering is automatic. */
 #header{
-  position:fixed;top:0;left:0;right:0;z-index:50;
-  display:flex;align-items:center;justify-content:center;
-  padding:22px 36px;pointer-events:none;
-}
-#logo{
-  font-family:'Playfair Display',serif;font-style:italic;
-  font-size:2rem;color:#fff;
-  text-shadow:0 1px 14px rgba(0,0,0,0.6);letter-spacing:-0.01em;
-}
-#clock-hero{
-  position:fixed;top:24px;right:36px;
-  font-family:'Share Tech Mono',monospace;
-  font-size:0.85rem;letter-spacing:0.1em;
-  color:rgba(255,255,255,0.75);
-  z-index:50;pointer-events:none;
-  text-shadow:0 1px 8px rgba(0,0,0,0.7);
+  position:fixed;top:0;left:0;right:0;z-index:200;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 36px;
+  height:72px;
+  pointer-events:none;
 }
 #hamburger{
-  position:fixed;top:22px;left:36px;
   background:none;border:none;cursor:pointer;
   pointer-events:auto;
   display:flex;flex-direction:column;gap:5px;
-  padding:6px;z-index:200;
+  padding:6px;flex-shrink:0;
 }
 #hamburger span{display:block;width:22px;height:2px;background:rgba(255,255,255,0.85);transition:opacity 0.2s;}
 #hamburger:hover span{opacity:0.5;}
+#logo-img{
+  height:44px;width:auto;
+  display:block;
+  pointer-events:none;
+  position:absolute;left:50%;
+  transform:translateX(-50%);
+}
+#clock-hero{
+  font-family:'Share Tech Mono',monospace;
+  font-size:1.1rem;letter-spacing:0.08em;
+  color:rgba(255,255,255,0.85);
+  pointer-events:none;
+  text-shadow:0 1px 8px rgba(0,0,0,0.7);
+  flex-shrink:0;
+}
 
 /* ── JOIN CTA ── */
 #signup-bar{
@@ -203,75 +219,245 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;font-family:Ari
 #overlay-bg.active{background:rgba(0,0,0,0.45);pointer-events:auto;}
 
 /* ══════════════════════════════
-   XP WINDOW BASE
+   PAPER WINDOW BASE — analog ripped paper style
 ══════════════════════════════ */
 .xp-win{
-  position:fixed;background:#ece9d8;
-  border:1px solid #0831a0;border-radius:8px 8px 0 0;
-  box-shadow:3px 3px 10px rgba(0,0,0,0.55);
+  position:fixed;
+  background:#f5edd8;
+  border:none;
+  box-shadow:4px 6px 24px rgba(0,0,0,0.55), 0 2px 8px rgba(0,0,0,0.3);
   z-index:110;display:none;flex-direction:column;
-  min-width:300px;overflow:hidden;
+  min-width:300px;
+  overflow:visible;
+  /* ripped top + bottom edges via clip-path */
+  clip-path:polygon(
+    0% 1.8%, 2.5% 0%, 5% 1.5%, 7.5% 0.3%, 10% 1.8%, 12.5% 0%,
+    15% 1.4%, 17.5% 0.5%, 20% 1.8%, 22.5% 0%, 25% 1.5%, 27.5% 0.4%,
+    30% 1.8%, 32.5% 0%, 35% 1.4%, 37.5% 0.6%, 40% 1.8%, 42.5% 0.1%,
+    45% 1.5%, 47.5% 0%, 50% 1.8%, 52.5% 0.3%, 55% 1.5%, 57.5% 0%,
+    60% 1.8%, 62.5% 0.4%, 65% 1.5%, 67.5% 0%, 70% 1.8%, 72.5% 0.2%,
+    75% 1.5%, 77.5% 0%, 80% 1.8%, 82.5% 0.4%, 85% 1.5%, 87.5% 0%,
+    90% 1.8%, 92.5% 0.3%, 95% 1.5%, 97.5% 0%, 100% 1.8%,
+    100% 98%, 97.5% 100%, 95% 98.4%, 92.5% 100%, 90% 98.2%,
+    87.5% 100%, 85% 98.5%, 82.5% 100%, 80% 98.2%, 77.5% 100%,
+    75% 98.4%, 72.5% 100%, 70% 98.2%, 67.5% 100%, 65% 98.5%,
+    62.5% 100%, 60% 98.2%, 57.5% 100%, 55% 98.4%, 52.5% 100%,
+    50% 98.2%, 47.5% 100%, 45% 98.5%, 42.5% 100%, 40% 98.2%,
+    37.5% 100%, 35% 98.4%, 32.5% 100%, 30% 98.2%, 27.5% 100%,
+    25% 98.5%, 22.5% 100%, 20% 98.2%, 17.5% 100%, 15% 98.4%,
+    12.5% 100%, 10% 98.2%, 7.5% 100%, 5% 98.5%, 2.5% 100%, 0% 98%
+  );
+}
+/* ruled lines overlay */
+.xp-win::before{
+  content:'';
+  position:absolute;top:0;left:0;right:0;bottom:0;
+  background:repeating-linear-gradient(
+    transparent, transparent 29px,
+    #bad0e0 29px, #bad0e0 30px
+  );
+  background-position:0 60px;
+  opacity:0.25;pointer-events:none;z-index:0;
+}
+/* red margin line */
+.xp-win::after{
+  content:'';
+  position:absolute;top:0;bottom:0;left:44px;
+  width:1.5px;background:#e06060;opacity:0.35;
+  pointer-events:none;z-index:0;
 }
 .xp-win.open{display:flex;}
+
+/* per-window rotation variants */
+#how-win{transform:rotate(-1.2deg);}
+#drops-win{transform:rotate(0.7deg);}
+#about-win{transform:rotate(-0.8deg);}
+#faq-win{transform:rotate(1.0deg);}
+
+/* titlebar → paper eyebrow strip */
 .xp-titlebar{
-  background:linear-gradient(180deg,#0058e0 0%,#3a93ff 3%,#288eff 6%,#127bdc 10%,#1070d4 90%,#0058d0 100%);
-  padding:5px 6px 5px 8px;
+  background:transparent;
+  padding:18px 14px 6px 52px;
   display:flex;align-items:center;justify-content:space-between;
   user-select:none;cursor:default;flex-shrink:0;
-  border-radius:7px 7px 0 0;border-bottom:1px solid #0540a0;
+  border-bottom:1px solid rgba(160,120,56,0.2);
+  position:relative;z-index:1;
 }
 .xp-title-left{display:flex;align-items:center;gap:6px;overflow:hidden;flex:1;}
-.xp-title-icon{font-size:14px;flex-shrink:0;}
-.xp-title-text{font-size:12px;font-weight:bold;color:#fff;text-shadow:0 1px 2px rgba(0,0,0,0.5);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.xp-win-btns{display:flex;gap:2px;flex-shrink:0;margin-left:8px;}
-.xp-wbtn{width:21px;height:21px;border-radius:3px;border:1px solid;font-size:11px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-weight:bold;line-height:1;}
-.xp-wbtn-min{background:linear-gradient(180deg,#f0d080 0%,#d4a820 100%);border-color:#8a6800;color:#000;}
-.xp-wbtn-min:hover{filter:brightness(1.15);}
-.xp-wbtn-close{background:linear-gradient(180deg,#f08080 0%,#d82020 100%);border-color:#880000;color:#fff;}
-.xp-wbtn-close:hover{filter:brightness(1.15);}
-.xp-menubar{background:#ece9d8;border-bottom:1px solid #aaa;padding:1px 4px;display:flex;flex-shrink:0;}
-.xp-mitem{padding:3px 8px;font-size:12px;cursor:pointer;border-radius:3px;}
-.xp-mitem:hover{background:#316ac5;color:#fff;}
-.xp-body{flex:1;overflow-y:auto;background:#fff;}
-.xp-body::-webkit-scrollbar{width:16px;}
-.xp-body::-webkit-scrollbar-track{background:#f0f0f0;border-left:1px solid #ccc;}
-.xp-body::-webkit-scrollbar-thumb{background:linear-gradient(90deg,#c8c8c8,#a8a8a8);border:1px solid #888;}
-.xp-inner{padding:12px;}
-.xp-statusbar{border-top:1px solid #aaa;display:flex;flex-shrink:0;background:#ece9d8;}
-.xp-sb{flex:1;padding:2px 6px;font-size:10px;color:#000;border-right:1px solid #aaa;white-space:nowrap;font-family:'Share Tech Mono',monospace;}
-.xp-sb:last-child{border-right:none;}
+.xp-title-icon{font-size:13px;flex-shrink:0;opacity:0.6;}
+.xp-title-text{
+  font-family:'Victor Mono','Share Tech Mono',monospace;
+  font-size:9px;font-weight:600;letter-spacing:0.2em;text-transform:uppercase;
+  color:#a07838;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.xp-win-btns{display:flex;gap:6px;flex-shrink:0;margin-left:8px;}
+.xp-wbtn{
+  width:18px;height:18px;
+  border-radius:50%;
+  border:1.5px solid rgba(0,0,0,0.2);
+  font-size:9px;display:flex;align-items:center;justify-content:center;
+  cursor:pointer;font-weight:bold;line-height:1;
+  color:rgba(0,0,0,0.4);
+  background:rgba(160,120,56,0.12);
+  transition:background 0.15s;
+}
+.xp-wbtn:hover{background:rgba(160,120,56,0.35);color:rgba(0,0,0,0.7);}
+.xp-wbtn-min{}
+.xp-wbtn-min:hover{}
+.xp-wbtn-close{}
+.xp-wbtn-close:hover{}
 
-/* Panel content */
-.xp-tx-header{background:linear-gradient(90deg,#000080,#1084d0);color:#fff;padding:6px 10px;margin-bottom:10px;font-size:10px;letter-spacing:0.08em;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:4px;font-family:'Share Tech Mono',monospace;}
-.how-step-row{display:flex;margin-bottom:2px;border-bottom:1px solid #e8e8e8;}
+/* hide old-style menubar */
+.xp-menubar{display:none;}
+.xp-mitem{}
+
+/* body area */
+.xp-body{
+  flex:1;overflow-y:auto;
+  background:transparent;
+  position:relative;z-index:1;
+}
+.xp-body::-webkit-scrollbar{width:6px;}
+.xp-body::-webkit-scrollbar-track{background:rgba(160,120,56,0.08);}
+.xp-body::-webkit-scrollbar-thumb{background:rgba(160,120,56,0.3);border-radius:3px;}
+.xp-inner{padding:10px 16px 20px 52px;}
+
+/* hide old statusbar */
+.xp-statusbar{display:none;}
+.xp-sb{}
+
+/* ══════════════════════════════
+   PANEL CONTENT — paper style
+══════════════════════════════ */
+
+/* section title inside paper */
+.xp-tx-header{
+  font-family:'Victor Mono','Share Tech Mono',monospace;
+  font-size:20px;font-weight:600;
+  color:#1a1208;line-height:1.2;
+  letter-spacing:-0.02em;
+  margin-bottom:14px;
+  padding:0;
+  background:none;
+}
+
+/* HOW IT WORKS */
+.how-step-row{
+  display:flex;gap:12px;
+  padding:9px 0;
+  border-bottom:1px solid rgba(160,120,56,0.15);
+  margin-bottom:0;
+}
 .how-step-row:last-of-type{border-bottom:none;margin-bottom:10px;}
-.how-step-num{background:#316ac5;color:#fff;font-size:10px;font-weight:bold;width:28px;min-width:28px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-family:'Share Tech Mono',monospace;}
-.how-step-txt{font-size:12px;color:#000;line-height:1.6;padding:8px 10px;}
-.how-step-txt strong{color:#316ac5;}
-.how-cta{display:block;width:100%;background:linear-gradient(180deg,#316ac5 0%,#1a4aaa 100%);color:#fff;border:1px solid #0831a0;border-radius:3px;font-size:12px;padding:8px;cursor:pointer;text-align:center;margin-top:4px;}
-.how-cta:hover{filter:brightness(1.1);}
-.lb-header{background:linear-gradient(90deg,#000080,#1084d0);color:#fff;padding:5px 8px;margin-bottom:8px;font-size:10px;letter-spacing:0.06em;font-family:'Share Tech Mono',monospace;}
-.lb-row{display:flex;align-items:baseline;padding:7px 4px;border-bottom:1px solid #e0e0e0;cursor:pointer;}
-.lb-row:hover{background:#e8f0ff;}
-.lb-num{font-size:10px;color:#000080;min-width:64px;flex-shrink:0;font-weight:bold;font-family:'Share Tech Mono',monospace;}
-.lb-name{font-size:11px;color:#000;flex:1;}
-.lb-dots{flex:1;border-bottom:1px dotted #aaa;margin:0 8px;min-width:10px;}
-.lb-status{font-size:9px;letter-spacing:0.08em;flex-shrink:0;font-weight:bold;font-family:'Share Tech Mono',monospace;}
-.lb-status.active{color:#006600;}.lb-status.archive{color:#808080;}
-.lb-detail{display:none;padding:8px 4px 8px 64px;background:#f0f4ff;border-bottom:1px solid #e0e0e0;font-size:11px;line-height:1.7;color:#000;}
+.how-step-num{
+  font-family:'Victor Mono','Share Tech Mono',monospace;
+  font-size:11px;color:#c8922a;
+  min-width:20px;padding-top:1px;
+  font-weight:600;flex-shrink:0;
+  background:none;
+  display:flex;align-items:flex-start;justify-content:flex-start;
+  width:auto;
+}
+.how-step-txt{
+  font-family:'Inter',Arial,sans-serif;
+  font-size:12px;color:#4a3e2c;line-height:1.7;
+  padding:0;
+}
+.how-step-txt strong{color:#1a1208;font-weight:600;}
+.how-cta{
+  display:block;width:100%;
+  background:#1a1208;color:#f5edd8;
+  font-family:'Inter',Arial,sans-serif;
+  font-size:11px;font-weight:600;
+  letter-spacing:0.12em;text-transform:uppercase;
+  padding:12px;cursor:pointer;border:none;
+  text-align:center;margin-top:8px;
+  transition:background 0.15s;
+}
+.how-cta:hover{background:#3a2a10;}
+
+/* DROP ARCHIVE */
+.lb-header{
+  font-family:'Victor Mono','Share Tech Mono',monospace;
+  font-size:9px;letter-spacing:0.2em;text-transform:uppercase;
+  color:#a07838;margin-bottom:10px;
+  background:none;padding:0;
+}
+.lb-row{
+  display:flex;align-items:baseline;
+  padding:9px 0;
+  border-bottom:1px solid rgba(160,120,56,0.15);
+  cursor:pointer;
+}
+.lb-row:hover{background:rgba(160,120,56,0.07);}
+.lb-num{
+  font-family:'Victor Mono','Share Tech Mono',monospace;
+  font-size:11px;color:#c8922a;
+  min-width:52px;flex-shrink:0;font-weight:600;
+}
+.lb-name{
+  font-family:'Inter',Arial,sans-serif;
+  font-size:12px;color:#4a3e2c;flex:1;
+}
+.lb-dots{flex:1;border-bottom:1px dotted rgba(160,120,56,0.3);margin:0 8px;min-width:10px;}
+.lb-status{
+  font-family:'Victor Mono','Share Tech Mono',monospace;
+  font-size:9px;letter-spacing:0.08em;flex-shrink:0;font-weight:600;
+}
+.lb-status.active{color:#5a7a2c;}
+.lb-status.archive{color:#a07838;opacity:0.6;}
+.lb-detail{
+  display:none;
+  padding:8px 0 8px 52px;
+  background:rgba(160,120,56,0.06);
+  border-bottom:1px solid rgba(160,120,56,0.15);
+  font-family:'Inter',Arial,sans-serif;
+  font-size:11px;line-height:1.7;color:#4a3e2c;
+}
 .lb-detail.open{display:block;}
-.lb-detail strong{color:#000080;}
-.lb-terminal-btn{display:inline-block;margin-top:8px;background:linear-gradient(180deg,#316ac5 0%,#1a4aaa 100%);color:#fff;border:1px solid #0831a0;border-radius:3px;font-family:'Share Tech Mono',monospace;font-size:10px;padding:4px 10px;cursor:pointer;}
-.lb-terminal-btn:hover{filter:brightness(1.1);}
-.about-section{margin-bottom:12px;}
-.about-label{font-size:10px;color:#316ac5;text-transform:uppercase;letter-spacing:0.1em;border-bottom:1px solid #c0d0e8;padding-bottom:2px;margin-bottom:4px;font-family:'Share Tech Mono',monospace;}
-.about-val{font-size:12px;color:#000;line-height:1.65;}
-.about-val.italic{font-style:italic;color:#333;}
-.faq-row{border-bottom:1px solid #e0e0e0;cursor:pointer;}
-.faq-q{display:flex;justify-content:space-between;align-items:center;padding:8px 4px;font-size:12px;color:#000;gap:8px;}
-.faq-q::after{content:'+';color:#aaa;font-size:14px;flex-shrink:0;transition:transform 0.15s;}
-.faq-row.open .faq-q::after{transform:rotate(45deg);color:#316ac5;}
-.faq-a{display:none;padding:4px 4px 10px;font-size:11px;line-height:1.7;color:#333;}
+.lb-detail strong{color:#1a1208;font-weight:600;}
+.lb-terminal-btn{
+  display:inline-block;margin-top:8px;
+  background:#1a1208;color:#f5edd8;
+  font-family:'Victor Mono','Share Tech Mono',monospace;
+  font-size:10px;letter-spacing:0.1em;
+  padding:5px 12px;cursor:pointer;border:none;
+  transition:background 0.15s;
+}
+.lb-terminal-btn:hover{background:#3a2a10;}
+
+/* ABOUT */
+.about-section{margin-bottom:14px;}
+.about-label{
+  font-family:'Victor Mono','Share Tech Mono',monospace;
+  font-size:9px;color:#a07838;text-transform:uppercase;
+  letter-spacing:0.18em;
+  border-bottom:1px solid rgba(160,120,56,0.2);
+  padding-bottom:3px;margin-bottom:5px;
+}
+.about-val{
+  font-family:'Inter',Arial,sans-serif;
+  font-size:12px;color:#4a3e2c;line-height:1.65;
+}
+.about-val.italic{font-style:italic;color:#6a5a3c;}
+
+/* FAQ */
+.faq-row{border-bottom:1px solid rgba(160,120,56,0.15);cursor:pointer;}
+.faq-q{
+  display:flex;justify-content:space-between;align-items:center;
+  padding:9px 0;
+  font-family:'Inter',Arial,sans-serif;
+  font-size:12px;color:#1a1208;gap:8px;font-weight:500;
+}
+.faq-q::after{content:'+';color:#c8922a;font-size:16px;flex-shrink:0;transition:transform 0.15s;font-family:'Victor Mono','Share Tech Mono',monospace;}
+.faq-row.open .faq-q::after{transform:rotate(45deg);color:#a07838;}
+.faq-a{
+  display:none;
+  padding:2px 0 10px;
+  font-family:'Inter',Arial,sans-serif;
+  font-size:11px;line-height:1.7;color:#4a3e2c;
+}
 .faq-row.open .faq-a{display:block;}
 
 /* ══════════════════════════════
@@ -489,7 +675,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;font-family:Ari
 
 <header id="header">
   <button id="hamburger" aria-label="Menu"><span></span><span></span><span></span></button>
-  <div id="logo">dös</div>
+  <img id="logo-img" src="logo1.png" alt="Dös Coffee Club">
   <div id="clock-hero"></div>
 </header>
 
@@ -666,13 +852,13 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;font-family:Ari
 </div>
 
 <!-- TEMPLATES -->
-<template id="tpl-how"><div class="xp-inner"><div class="xp-tx-header">HOW IT WORKS — DÖS COFFEE CLUB</div><div class="how-step-row"><div class="how-step-num">01</div><div class="how-step-txt"><strong>Sign up with your number.</strong> Membership is free. No monthly fees, ever.</div></div><div class="how-step-row"><div class="how-step-num">02</div><div class="how-step-txt"><strong>We text you when a new coffee drops.</strong> Small-batch, rare origins, sourced by us.</div></div><div class="how-step-row"><div class="how-step-num">03</div><div class="how-step-txt"><strong>Reply yes.</strong> Your order processes. Coffee arrives at your door.</div></div><button class="how-cta" id="how-join-btn">Join the Club →</button></div></template>
+<template id="tpl-how"><div class="xp-inner"><div class="xp-tx-header">Three steps.<br>That's it.</div><div class="how-step-row"><div class="how-step-num">01</div><div class="how-step-txt"><strong>Sign up with your number.</strong> Membership is free. No monthly fees, ever.</div></div><div class="how-step-row"><div class="how-step-num">02</div><div class="how-step-txt"><strong>We text you when a new coffee drops.</strong> Small-batch, rare origins, sourced by us.</div></div><div class="how-step-row"><div class="how-step-num">03</div><div class="how-step-txt"><strong>Reply yes.</strong> Your order processes. Coffee arrives at your door.</div></div><button class="how-cta" id="how-join-btn">Join the Club →</button></div></template>
 
-<template id="tpl-drops"><div class="xp-inner"><div class="lb-header">DROP ARCHIVE — THE LOGBOOK</div><div class="lb-row" data-idx="0"><span class="lb-num">DROP 007</span><span class="lb-name">La Curva Farm, Venezuela</span><span class="lb-dots"></span><span class="lb-status active">[ACTIVE]</span></div><div class="lb-detail" data-detail="0"><strong>Origin:</strong> Estado de Merida, Venezuela<br><strong>Varieties:</strong> Villa Nueva &amp; Castillo<br><strong>Process:</strong> Fully Washed<br><strong>Notes:</strong> Baked Goods, Vanilla, Mandarin, Cacao Nibs<br><div class="lb-terminal-btn" data-ghost="true">Access Terminal →</div></div><div class="lb-row" data-idx="1"><span class="lb-num">DROP 006</span><span class="lb-name">FPO Farm, Colombia</span><span class="lb-dots"></span><span class="lb-status archive">[ARCHIVED]</span></div><div class="lb-detail" data-detail="1"><strong>Origin:</strong> FPO<br><strong>Process:</strong> Natural</div><div class="lb-row" data-idx="2"><span class="lb-num">DROP 005</span><span class="lb-name">FPO Farm, Ethiopia</span><span class="lb-dots"></span><span class="lb-status archive">[ARCHIVED]</span></div><div class="lb-detail" data-detail="2">FPO — placeholder copy.</div><div class="lb-row" data-idx="3"><span class="lb-num">DROP 004</span><span class="lb-name">FPO Farm, Guatemala</span><span class="lb-dots"></span><span class="lb-status archive">[ARCHIVED]</span></div><div class="lb-detail" data-detail="3">FPO — placeholder copy.</div><div class="lb-row" data-idx="4"><span class="lb-num">DROP 003</span><span class="lb-name">FPO Farm, Kenya</span><span class="lb-dots"></span><span class="lb-status archive">[ARCHIVED]</span></div><div class="lb-detail" data-detail="4">FPO — placeholder copy.</div><div class="lb-row" data-idx="5"><span class="lb-num">DROP 002</span><span class="lb-name">FPO Farm, Costa Rica</span><span class="lb-dots"></span><span class="lb-status archive">[ARCHIVED]</span></div><div class="lb-detail" data-detail="5">FPO — placeholder copy.</div><div class="lb-row" data-idx="6"><span class="lb-num">DROP 001</span><span class="lb-name">FPO Farm, Peru</span><span class="lb-dots"></span><span class="lb-status archive">[ARCHIVED]</span></div><div class="lb-detail" data-detail="6">FPO — placeholder copy.</div></div></template>
+<template id="tpl-drops"><div class="xp-inner"><div class="xp-tx-header">The Logbook.</div><div class="lb-header">Drop Archive</div><div class="lb-row" data-idx="0"><span class="lb-num">DROP 007</span><span class="lb-name">La Curva Farm, Venezuela</span><span class="lb-dots"></span><span class="lb-status active">[ACTIVE]</span></div><div class="lb-detail" data-detail="0"><strong>Origin:</strong> Estado de Merida, Venezuela<br><strong>Varieties:</strong> Villa Nueva &amp; Castillo<br><strong>Process:</strong> Fully Washed<br><strong>Notes:</strong> Baked Goods, Vanilla, Mandarin, Cacao Nibs<br><div class="lb-terminal-btn" data-ghost="true">Access Terminal →</div></div><div class="lb-row" data-idx="1"><span class="lb-num">DROP 006</span><span class="lb-name">FPO Farm, Colombia</span><span class="lb-dots"></span><span class="lb-status archive">[ARCHIVED]</span></div><div class="lb-detail" data-detail="1"><strong>Origin:</strong> FPO<br><strong>Process:</strong> Natural</div><div class="lb-row" data-idx="2"><span class="lb-num">DROP 005</span><span class="lb-name">FPO Farm, Ethiopia</span><span class="lb-dots"></span><span class="lb-status archive">[ARCHIVED]</span></div><div class="lb-detail" data-detail="2">FPO — placeholder copy.</div><div class="lb-row" data-idx="3"><span class="lb-num">DROP 004</span><span class="lb-name">FPO Farm, Guatemala</span><span class="lb-dots"></span><span class="lb-status archive">[ARCHIVED]</span></div><div class="lb-detail" data-detail="3">FPO — placeholder copy.</div><div class="lb-row" data-idx="4"><span class="lb-num">DROP 003</span><span class="lb-name">FPO Farm, Kenya</span><span class="lb-dots"></span><span class="lb-status archive">[ARCHIVED]</span></div><div class="lb-detail" data-detail="4">FPO — placeholder copy.</div><div class="lb-row" data-idx="5"><span class="lb-num">DROP 002</span><span class="lb-name">FPO Farm, Costa Rica</span><span class="lb-dots"></span><span class="lb-status archive">[ARCHIVED]</span></div><div class="lb-detail" data-detail="5">FPO — placeholder copy.</div><div class="lb-row" data-idx="6"><span class="lb-num">DROP 001</span><span class="lb-name">FPO Farm, Peru</span><span class="lb-dots"></span><span class="lb-status archive">[ARCHIVED]</span></div><div class="lb-detail" data-detail="6">FPO — placeholder copy.</div></div></template>
 
-<template id="tpl-about"><div class="xp-inner"><div class="xp-tx-header">ABOUT DÖS COFFEE CLUB</div><div class="about-section"><div class="about-label">Mission</div><div class="about-val">Dös is all about seeking out the world's most interesting coffees and learning about the craft behind the bean — from farming to processing to roasting and brewing.</div></div><div class="about-section"><div class="about-label">Philosophy</div><div class="about-val italic">"In the right hands, a simple bean blooms into something marvelous."</div></div><div class="about-section"><div class="about-label">The Club</div><div class="about-val">We focus on passionate origins and truly unique processing methods. Join and we'll be your passport to a world of coffee you've never known before. Membership is free.</div></div><div class="about-section"><div class="about-label">Founded By</div><div class="about-val">Evan Wickersham — Philadelphia, PA<br><span style="color:#808080;font-size:11px;">FPO — full story coming.</span></div></div></div></template>
+<template id="tpl-about"><div class="xp-inner"><div class="xp-tx-header">About Dös.</div><div class="about-section"><div class="about-label">Mission</div><div class="about-val">Dös is all about seeking out the world's most interesting coffees and learning about the craft behind the bean — from farming to processing to roasting and brewing.</div></div><div class="about-section"><div class="about-label">Philosophy</div><div class="about-val italic">"In the right hands, a simple bean blooms into something marvelous."</div></div><div class="about-section"><div class="about-label">The Club</div><div class="about-val">We focus on passionate origins and truly unique processing methods. Join and we'll be your passport to a world of coffee you've never known before. Membership is free.</div></div><div class="about-section"><div class="about-label">Founded By</div><div class="about-val">Evan Wickersham — Philadelphia, PA<br><span style="color:#808080;font-size:11px;">FPO — full story coming.</span></div></div></div></template>
 
-<template id="tpl-faq"><div class="xp-inner"><div class="xp-tx-header">FREQUENTLY ASKED QUESTIONS</div><div class="faq-row"><div class="faq-q">How do I sign up?</div><div class="faq-a">Enter your phone number using the "Join the Club" button. Before your first order you'll provide address and payment info — you're never charged until you order coffee.</div></div><div class="faq-row"><div class="faq-q">How does ordering work?</div><div class="faq-a">After signing up, you'll get a text when we drop a new coffee. Reply "Yes" and your order processes. Easy.</div></div><div class="faq-row"><div class="faq-q">Whole bean or pre-ground?</div><div class="faq-a">Whole bean only. We don't pre-grind — freshness isn't negotiable.</div></div><div class="faq-row"><div class="faq-q">How much is shipping?</div><div class="faq-a">Expect $5–6 per bag shipped via USPS, as soon as the coffee is roasted.</div></div><div class="faq-row"><div class="faq-q">How do I cancel?</div><div class="faq-a">No subscription, no monthly fees — ever. To leave, text "STOP".</div></div><div class="faq-row"><div class="faq-q">How do I update my info?</div><div class="faq-a">Fill out the address and payment form again with the same phone number.</div></div></div></template>
+<template id="tpl-faq"><div class="xp-inner"><div class="xp-tx-header">Questions.<br>Answered.</div><div class="faq-row"><div class="faq-q">How do I sign up?</div><div class="faq-a">Enter your phone number using the "Join the Club" button. Before your first order you'll provide address and payment info — you're never charged until you order coffee.</div></div><div class="faq-row"><div class="faq-q">How does ordering work?</div><div class="faq-a">After signing up, you'll get a text when we drop a new coffee. Reply "Yes" and your order processes. Easy.</div></div><div class="faq-row"><div class="faq-q">Whole bean or pre-ground?</div><div class="faq-a">Whole bean only. We don't pre-grind — freshness isn't negotiable.</div></div><div class="faq-row"><div class="faq-q">How much is shipping?</div><div class="faq-a">Expect $5–6 per bag shipped via USPS, as soon as the coffee is roasted.</div></div><div class="faq-row"><div class="faq-q">How do I cancel?</div><div class="faq-a">No subscription, no monthly fees — ever. To leave, text "STOP".</div></div><div class="faq-row"><div class="faq-q">How do I update my info?</div><div class="faq-a">Fill out the address and payment form again with the same phone number.</div></div></div></template>
 
 <script>
 const isMobile=()=>window.innerWidth<768;
@@ -713,6 +899,14 @@ function updateClocks(){
 }
 updateClocks();setInterval(updateClocks,1000);
 
+// ── HORIZONTAL SCROLL VIA MOUSE WHEEL ──
+// body has overflow:hidden so wheel events don't reach #hero naturally.
+// Forward them manually.
+document.getElementById('hero').addEventListener('wheel',function(e){
+  e.preventDefault();
+  this.scrollLeft+=e.deltaY+e.deltaX;
+},{passive:false});
+
 // ══════════════════════════════
 // DOT CLICKS
 // ══════════════════════════════
@@ -741,7 +935,7 @@ const winBodies={
   about: document.getElementById('about-body'),
   faq:   document.getElementById('faq-body'),
 };
-const WIN_SIZES={how:{w:340,h:230},drops:{w:420,h:350},about:{w:360,h:290},faq:{w:380,h:340}};
+const WIN_SIZES={how:{w:340,h:260},drops:{w:420,h:370},about:{w:360,h:310},faq:{w:380,h:360}};
 const WIN_OFFSET={how:{dx:-10,dy:16},drops:{dx:-400,dy:16},about:{dx:-350,dy:16},faq:{dx:-350,dy:16}};
 let zTop=110;const getZ=()=>++zTop;
 
@@ -762,6 +956,9 @@ function openWin(key,dotX,dotY){
   win.style.left=x+'px';win.style.top=y+'px';
   win.style.width=sz.w+'px';
   win.style.zIndex=getZ();
+  // Apply resting paper rotation inline (overrides CSS so drag system can also use it)
+  const rot=PAPER_ROT[key]||0;
+  win.style.transform=`rotate(${rot}deg)`;
   win.style.display='flex';win.classList.add('open');
 }
 
@@ -783,15 +980,35 @@ document.querySelectorAll('.xp-wbtn[data-action]').forEach(btn=>{
   });
 });
 
+// Paper rotation map — each window has a natural resting rotation
+const PAPER_ROT={how:-1.2,drops:0.7,about:-0.8,faq:1.0};
+function getPaperKey(win){return Object.keys(winEls).find(k=>winEls[k]===win)||null;}
+
 function makeDraggable(win,handle){
   let sx,sy,ox,oy;
   handle.addEventListener('mousedown',e=>{
     if(e.target.classList.contains('xp-wbtn'))return;
     e.preventDefault();win.style.zIndex=getZ();
     sx=e.clientX;sy=e.clientY;ox=win.offsetLeft;oy=win.offsetTop;
-    const mm=e=>{win.style.left=(ox+e.clientX-sx)+'px';win.style.top=(oy+e.clientY-sy)+'px';};
-    const mu=()=>{document.removeEventListener('mousemove',mm);document.removeEventListener('mouseup',mu);};
-    document.addEventListener('mousemove',mm);document.addEventListener('mouseup',mu);
+    // Slightly straighten when picked up
+    const key=getPaperKey(win);
+    const restRot=key?PAPER_ROT[key]||0:0;
+    const liftRot=restRot*0.3;
+    win.style.transform=`rotate(${liftRot}deg) scale(1.02)`;
+    win.style.transition='transform 0.12s ease';
+    const mm=e=>{
+      win.style.left=(ox+e.clientX-sx)+'px';
+      win.style.top=(oy+e.clientY-sy)+'px';
+    };
+    const mu=()=>{
+      // Restore resting rotation on drop
+      win.style.transform=`rotate(${restRot}deg) scale(1)`;
+      setTimeout(()=>{win.style.transition='';},200);
+      document.removeEventListener('mousemove',mm);
+      document.removeEventListener('mouseup',mu);
+    };
+    document.addEventListener('mousemove',mm);
+    document.addEventListener('mouseup',mu);
   });
 }
 
