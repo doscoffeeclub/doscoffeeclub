@@ -599,21 +599,19 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;font-family:Ari
 }
 #signup-body{padding:16px 16px 20px 52px;position:relative;z-index:1;}
 #signup-body p{font-size:12px;color:#4a3e2c;line-height:1.7;margin-bottom:14px;}
-#signup-body label{
-  display:block;margin-bottom:6px;color:#a07838;font-size:9px;letter-spacing:0.18em;text-transform:uppercase;
-  font-family:'Share Tech Mono',monospace;
-}
-#signup-body input{
-  width:100%;background:rgba(255,255,255,0.55);border:none;border-bottom:1px solid rgba(160,120,56,0.32);
-  font-family:'Inter',Arial,sans-serif;font-size:13px;padding:10px 0 8px;outline:none;margin-bottom:14px;color:#1a1208;
-}
-#signup-body input::placeholder{color:#8b7e67;}
-#signup-submit{
-  display:block;width:100%;background:#1a1208;border:none;border-radius:4px;font-size:11px;padding:12px 14px;cursor:pointer;
-  color:#f5edd8;letter-spacing:0.12em;text-transform:uppercase;font-weight:600;
-}
-#signup-submit:hover{background:#3a2a10;}
 #signup-note{margin-top:10px;font-size:10px;color:#6a5a3c;line-height:1.6;}
+#signup-embed{
+  margin-top:8px;padding:14px 14px 12px;background:rgba(255,255,255,0.38);
+  border:1px solid rgba(160,120,56,0.18);
+}
+#signup-embed textretailer-form{display:block;}
+#signup-fallback{
+  display:inline-flex;align-items:center;justify-content:center;margin-top:12px;
+  min-height:38px;padding:10px 14px;background:#1a1208;border-radius:4px;
+  color:#f5edd8;text-decoration:none;letter-spacing:0.12em;text-transform:uppercase;
+  font-size:10px;font-weight:600;
+}
+#signup-fallback:hover{background:#3a2a10;}
 
 /* ══════════════════════════════
    GHOST DESKTOP
@@ -924,7 +922,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;font-family:Ari
 <div id="signup-modal">
   <div id="signup-win-modal">
     <div id="signup-title"><span id="signup-title-txt">📱 Join Dös Coffee Club</span><div id="signup-close">✕</div></div>
-    <form id="signup-body"><p>Drop your number in the ledger and we'll text you when a new coffee lands. No spam. No fees. Just rare coffee on your phone.</p><label for="signup-phone">Phone Number</label><input id="signup-phone" name="phone" type="tel" placeholder="+1 (215) 000-0000" autocomplete="tel"><button id="signup-submit" type="submit">Send My Number</button><div id="signup-note">Static preview for now. This rebuild keeps the interaction ready while we hook up the real capture flow.</div></form>
+    <div id="signup-body"><p>Drop your number in the ledger and we'll text you when a new coffee lands. No spam. No fees. Just rare coffee on your phone.</p><div id="signup-embed"><textretailer-form form_id="TpvVai"></textretailer-form></div><a id="signup-fallback" href="https://doscoffeeclub.audiencetap.com/form/TpvVai" target="_blank" rel="noopener noreferrer">Open Full Form</a><div id="signup-note">If the embedded form stalls, the hosted version opens the same signup flow in a new tab.</div></div>
   </div>
 </div>
 
@@ -1080,6 +1078,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;font-family:Ari
 
 <template id="tpl-faq"><div class="xp-inner"><div class="xp-tx-header">Questions.<br>Answered.</div><div class="faq-row"><div class="faq-q">How do I sign up?</div><div class="faq-a">Enter your phone number using the "Join the Club" button. Before your first order you'll provide address and payment info — you're never charged until you order coffee.</div></div><div class="faq-row"><div class="faq-q">How does ordering work?</div><div class="faq-a">After signing up, you'll get a text when we drop a new coffee. Reply "Yes" and your order processes. Easy.</div></div><div class="faq-row"><div class="faq-q">Whole bean or pre-ground?</div><div class="faq-a">Whole bean only. We don't pre-grind — freshness isn't negotiable.</div></div><div class="faq-row"><div class="faq-q">How much is shipping?</div><div class="faq-a">Expect $5–6 per bag shipped via USPS, as soon as the coffee is roasted.</div></div><div class="faq-row"><div class="faq-q">How do I cancel?</div><div class="faq-a">No subscription, no monthly fees — ever. To leave, text "STOP".</div></div><div class="faq-row"><div class="faq-q">How do I update my info?</div><div class="faq-a">Fill out the address and payment form again with the same phone number.</div></div></div></template>
 
+<script src="https://form.textretailer.com/form.js"></script>
 <script>
 const isMobile=()=>window.innerWidth<768;
 
@@ -1306,17 +1305,6 @@ function openSignup(){document.getElementById('signup-modal').classList.add('ope
 document.getElementById('signup-btn').addEventListener('click',openSignup);
 document.getElementById('signup-close').addEventListener('click',()=>document.getElementById('signup-modal').classList.remove('open'));
 document.getElementById('signup-modal').addEventListener('click',e=>{if(e.target===document.getElementById('signup-modal'))document.getElementById('signup-modal').classList.remove('open');});
-document.getElementById('signup-body').addEventListener('submit',e=>{
-  e.preventDefault();
-  const input=document.getElementById('signup-phone');
-  const digits=(input.value||'').replace(/\D/g,'');
-  const note=document.getElementById('signup-note');
-  if(digits.length<10){
-    note.textContent='Add a valid phone number so the signup flow has something real to work with.';
-    return;
-  }
-  note.textContent='Looks good. The real text capture still needs to be connected, but the rebuilt interaction is in place.';
-});
 
 // ══════════════════════════════
 // GHOST DESKTOP
